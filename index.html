@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Mockrise • Cut-off</title>
+
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <style>
+    body{font-family:"Lexend",sans-serif;background:#f5f5f8;min-height:100dvh;}
+    .shadow-card{box-shadow:0 14px 40px rgba(0,0,0,.08);}
+    .field{
+      width:100%;height:54px;
+      border:1.5px solid #dbdbe6;border-radius:18px;
+      padding:12px 14px;font-weight:800;outline:none;background:#fff;
+    }
+    .field:focus{
+      border-color:#0a0ac2;
+      box-shadow:0 0 0 4px rgba(10,10,194,.12);
+    }
+    .btnPrimary{
+      width:100%;
+      background:#0a0ac2;color:#fff;
+      font-weight:900;padding:15px;border-radius:20px;
+      box-shadow:0 12px 24px rgba(10,10,194,.20);
+      transition:.2s;
+      display:flex;align-items:center;justify-content:center;gap:10px;
+      cursor:pointer; user-select:none;
+    }
+    .btnPrimary:active{transform:scale(.98);}
+    .btnPrimary:disabled{
+      opacity:.55; cursor:not-allowed; transform:none;
+    }
+    .chip{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:10px 12px;border-radius:999px;
+      background:rgba(10,10,194,.08);
+      color:#0a0ac2;font-weight:900;font-size:12px;
+      border:1px solid rgba(10,10,194,.10);
+      white-space:nowrap;
+    }
+    .cutBox{
+      background:#fff;border:1px solid #eef0f6;
+      border-radius:18px;padding:14px;
+      box-shadow:0 10px 30px rgba(0,0,0,.05);
+      display:flex;flex-direction:column;gap:6px;
+    }
+    .cutLabel{font-size:11px;color:#6b7280;font-weight:900;letter-spacing:.12em;text-transform:uppercase;}
+    .cutValue{font-size:18px;font-weight:900;color:#111118;line-height:1.1;}
+    .cutTag{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:900;color:#16a34a;}
+    .line{height:1px;background:linear-gradient(90deg, transparent, rgba(10,10,194,.25), transparent);}
+    .smallNote{font-size:11px;color:#6b7280;font-weight:800;line-height:1.4;}
+
+    /* ✅ Profile Modal */
+    .modalOverlay{
+      position:fixed; inset:0;
+      background:rgba(17,17,24,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:14px;
+      z-index:999;
+    }
+    .modalBox{
+      width:min(560px,100%);
+      background:#fff;
+      border-radius:22px;
+      border:1px solid #eef0f6;
+      box-shadow:0 18px 60px rgba(0,0,0,.20);
+      overflow:hidden;
+    }
+    .modalTop{
+      padding:16px 18px;
+      border-bottom:1px solid #f0f1f6;
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+    }
+    .modalTitle{font-weight:900;color:#111118;font-size:16px;}
+    .modalBody{padding:16px 18px;}
+    .helpTxt{font-size:12px;color:#6b7280;font-weight:800;line-height:1.5;}
+    .errTxt{font-size:12px;color:#dc2626;font-weight:900;display:none;margin-top:8px;}
+    .miniBtn{
+      border:1px solid #dbdbe6;
+      background:#fff;
+      border-radius:14px;
+      padding:10px 12px;
+      font-weight:900;
+      cursor:pointer;
+      user-select:none;
+    }
+    .miniBtn:active{transform:scale(.98);}
+    .okBadge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:8px 10px;
+      border-radius:999px;
+      background:rgba(22,163,74,.10);
+      border:1px solid rgba(22,163,74,.18);
+      color:#16a34a;
+      font-weight:900;
+      font-size:12px;
+      white-space:nowrap;
+    }
+  </style>
+</head>
+
+<body>
+<div class="max-w-[1100px] mx-auto min-h-screen bg-white shadow-xl flex flex-col overflow-hidden">
+
+  <div class="px-6 pt-7 pb-3">
+    <div class="flex items-center justify-between gap-3">
+      <button onclick="goBack()" class="text-[#0a0ac2] flex size-10 items-center justify-center cursor-pointer rounded-full hover:bg-[#0a0ac2]/10 transition">
+        <span class="material-symbols-outlined">arrow_back</span>
+      </button>
+
+      <div class="flex-1">
+        <h3 class="text-[#111118] text-xl font-black text-center">Mockrise Auto Cut-off</h3>
+        <p class="text-[#60608a] text-xs mt-1 text-center">
+          Firestore से auto calculate ✅
+        </p>
+      </div>
+
+      <button id="editProfileBtn" class="miniBtn">Edit</button>
+    </div>
+
+    <div class="mt-3 flex justify-center">
+      <span id="profileBadge" class="okBadge" style="display:none;">
+        <span class="material-symbols-outlined text-[18px]">verified</span>
+        Profile Saved
+      </span>
+    </div>
+  </div>
+
+  <div class="px-6 pb-10 space-y-6">
+
+    <div class="rounded-2xl border border-[#dbdbe6] bg-white p-4 shadow-card">
+      <div class="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <div class="text-[#0a0ac2] text-xs font-black uppercase tracking-widest mb-1">User Details (Saved)</div>
+          <div class="text-[#111118] font-black text-sm" id="userLine1">Name: -</div>
+          <div class="text-[#111118] font-black text-sm mt-1" id="userLine2">Mobile: -</div>
+          <div class="text-[#111118] font-black text-sm mt-1" id="userLine3">Email: -</div>
+          <div class="text-[#111118] font-black text-sm mt-1" id="userLine4">Roll No: -</div>
+        </div>
+
+        <div class="smallNote">
+          *जब तक सही details save नहीं होंगी, Calculate button lock रहेगा ✅
+        </div>
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-[#dbdbe6] bg-white p-4 shadow-card">
+      <div class="text-[#0a0ac2] text-xs font-black uppercase tracking-widest mb-3">Exam Setup</div>
+
+      <label class="text-xs font-black text-gray-500 uppercase tracking-widest">Exam</label>
+      <select id="examSelect" class="field mt-2">
+        <option value="">Loading...</option>
+      </select>
+
+      <div class="mt-4 flex flex-wrap gap-2">
+        <span class="chip"><span class="material-symbols-outlined text-base">groups</span><span id="formsTxt">Forms: -</span></span>
+        <span class="chip"><span class="material-symbols-outlined text-base">event_seat</span><span id="vacancyTxt">Vacancy: -</span></span>
+        <span class="chip"><span class="material-symbols-outlined text-base">score</span><span id="marksTxt">Total Marks: -</span></span>
+        <span class="chip"><span class="material-symbols-outlined text-base">rule</span><span id="ruleTxt">+ -</span></span>
+      </div>
+
+      <div class="mt-4">
+        <button id="calcBtn" class="btnPrimary" disabled>
+          <span class="material-symbols-outlined">analytics</span>
+          Calculate Overall Cut-off
+        </button>
+        <div class="smallNote mt-2" id="lockNote" style="color:#dc2626; font-weight:900; display:none;">
+          पहले अपना सही नाम + 10 digit mobile + email save करो ✅
+        </div>
+      </div>
+
+      <div class="mt-4 line"></div>
+
+      <div class="mt-4 flex items-center justify-between flex-wrap gap-3">
+        <div class="smallNote">
+          Last Updated: <span id="lastUpdated" style="color:#111118;font-weight:900;">-</span>
+        </div>
+        <div class="smallNote">
+          Status: <span id="statusTxt" style="color:#16a34a;font-weight:900;">Ready</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-yellow-200 bg-yellow-50 p-4">
+      <div class="flex items-start gap-3">
+        <div class="size-10 rounded-xl bg-yellow-200/70 flex items-center justify-center text-yellow-800">
+          <span class="material-symbols-outlined">warning</span>
+        </div>
+        <div>
+          <div class="font-black text-[#111118] text-sm">Warning / Note</div>
+          <p class="text-xs text-yellow-900/80 mt-1 leading-relaxed">
+            यह data continuously update होता रहता है। Cut-off Firestore में saved students attempts के marks से auto calculate होती है।
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-[#dbdbe6] bg-white p-4 shadow-card">
+      <div class="flex items-center justify-between gap-2 mb-3">
+        <h3 class="text-[#111118] font-black text-base">Category-wise Cutoff (Overall Exam)</h3>
+        <span class="text-xs font-black text-[#0a0ac2]" id="examTitleMini">-</span>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div class="cutBox">
+          <div class="cutLabel">General</div>
+          <div class="cutValue" id="coGEN">--</div>
+          <div class="cutTag"><span class="material-symbols-outlined text-[16px]">check_circle</span> Auto</div>
+        </div>
+        <div class="cutBox">
+          <div class="cutLabel">OBC</div>
+          <div class="cutValue" id="coOBC">--</div>
+          <div class="cutTag"><span class="material-symbols-outlined text-[16px]">check_circle</span> Auto</div>
+        </div>
+        <div class="cutBox">
+          <div class="cutLabel">SC</div>
+          <div class="cutValue" id="coSC">--</div>
+          <div class="cutTag"><span class="material-symbols-outlined text-[16px]">check_circle</span> Auto</div>
+        </div>
+        <div class="cutBox">
+          <div class="cutLabel">ST</div>
+          <div class="cutValue" id="coST">--</div>
+          <div class="cutTag"><span class="material-symbols-outlined text-[16px]">check_circle</span> Auto</div>
+        </div>
+        <div class="cutBox">
+          <div class="cutLabel">EWS</div>
+          <div class="cutValue" id="coEWS">--</div>
+          <div class="cutTag"><span class="material-symbols-outlined text-[16px]">check_circle</span> Auto</div>
+        </div>
+        <div class="cutBox">
+          <div class="cutLabel">Other</div>
+          <div class="cutValue" id="coOTHER">--</div>
+          <div class="cutTag"><span class="material-symbols-outlined text-[16px]">check_circle</span> Auto</div>
+        </div>
+      </div>
+
+      <div class="mt-4 smallNote">
+        *यह cut-off पूरे exam के सभी students data से calculate होती है (shift/paperCode नहीं).
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-[#0088cc]/20 bg-[#0088cc]/10 p-5">
+      <div class="flex items-start gap-3">
+        <div class="size-11 rounded-2xl bg-[#0088cc] flex items-center justify-center text-white shadow-lg">
+          <span class="material-symbols-outlined">send</span>
+        </div>
+        <div class="flex-1">
+          <div class="font-black text-[#111118] text-base">Join Mockrise Telegram</div>
+          <p class="text-xs text-[#0f3a52] font-bold mt-1 leading-relaxed">
+            Cut-off updates, result alerts, new exams & notifications instantly ✅
+          </p>
+          <button onclick="window.open('https://t.me/mockrise','_blank')" class="mt-4 w-full bg-[#0088cc] hover:bg-[#0077b5] text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 transition">
+            <span>Join Telegram</span>
+            <span class="material-symbols-outlined text-[20px]">open_in_new</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center text-[11px] text-gray-400 font-bold pb-10">
+      Mockrise • Auto Cut-off System
+    </div>
+
+  </div>
+</div>
+
+<!-- ✅ Profile Modal -->
+<div id="profileModal" class="modalOverlay">
+  <div class="modalBox">
+    <div class="modalTop">
+      <div class="modalTitle">Save Your Details</div>
+      <button id="closeModalBtn" class="miniBtn">Close</button>
+    </div>
+
+    <div class="modalBody">
+      <div class="helpTxt">
+        ✅ बिना login के आपका data save रहेगा (LocalStorage + Firestore)<br/>
+        ❌ गलत नाम / गलत mobile / गलत email होगा तो आगे नहीं जाने देगा।
+      </div>
+
+      <div class="mt-4 space-y-3">
+        <div>
+          <label class="text-xs font-black text-gray-500 uppercase tracking-widest">Full Name</label>
+          <input id="uName" class="field mt-2" placeholder="Enter your name"/>
+        </div>
+
+        <div>
+          <label class="text-xs font-black text-gray-500 uppercase tracking-widest">Mobile Number</label>
+          <input id="uMobile" class="field mt-2" placeholder="10 digit mobile" inputmode="numeric"/>
+        </div>
+
+        <div>
+          <label class="text-xs font-black text-gray-500 uppercase tracking-widest">Email</label>
+          <input id="uEmail" class="field mt-2" placeholder="example@gmail.com" inputmode="email"/>
+        </div>
+
+        <div>
+          <label class="text-xs font-black text-gray-500 uppercase tracking-widest">Roll Number</label>
+          <input id="uRoll" class="field mt-2" placeholder="Enter roll number"/>
+        </div>
+
+        <div id="profileErr" class="errTxt">Please fill valid details ❌</div>
+
+        <button id="saveProfileBtn" class="btnPrimary mt-2">
+          <span class="material-symbols-outlined">save</span>
+          Save Details
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  // ✅ Blogger
+  const BLOGGER_ID = "1505425628593992085";
+  const BLOGGER_KEY = "AIzaSyBaGppSDvKYBc_UGMDQ2JGmKi0V2FQa2ec";
+  const LABEL = "Result Name";
+
+  // ✅ Firebase
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+  import {
+    getFirestore,
+    collection,
+    getDocs,
+    query,
+    where,
+    doc,
+    setDoc,
+    serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC0QINninWOOCWh9Q1gomxHC0Y1_hrzjOU",
+    authDomain: "test-series-app-8295f.firebaseapp.com",
+    projectId: "test-series-app-8295f",
+    storageBucket: "test-series-app-8295f.firebasestorage.app",
+    messagingSenderId: "576199084436",
+    appId: "1:576199084436:web:875173574f2a0675a6a781"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const $ = (id)=>document.getElementById(id);
+
+  const PROFILE_KEY = "mockrise_cutoff_user_profile_v1";
+
+  let posts = [];
+  let examConfig = null;
+  let selectedExamTitle = "";
+
+  function goBack(){
+    try{ window.location.href="go:back"; }
+    catch(e){ history.back(); }
+  }
+  window.goBack = goBack;
+
+  function setStatus(text, color="green"){
+    $("statusTxt").textContent = text;
+    $("statusTxt").style.color = color==="green" ? "#16a34a" : color==="red" ? "#dc2626" : "#f59e0b";
+  }
+
+  function setLastUpdated(){
+    const d = new Date();
+    const date = d.toLocaleDateString("en-GB");
+    const time = d.toLocaleTimeString("en-IN", { hour:"2-digit", minute:"2-digit" });
+    $("lastUpdated").textContent = `${date} • ${time}`;
+  }
+
+  function parseJSONFromHTML(html){
+    const match = (html||"").match(/\{[\s\S]*\}/);
+    if(!match) return null;
+    try{ return JSON.parse(match[0]); } catch(e){ return null; }
+  }
+
+  function openProfileModal(){
+    $("profileModal").style.display = "flex";
+    $("profileErr").style.display = "none";
+  }
+  function closeProfileModal(){
+    $("profileModal").style.display = "none";
+  }
+
+  function normalizeName(name){
+    return String(name||"").trim().replace(/\s+/g," ");
+  }
+
+  function validName(name){
+    const n = normalizeName(name);
+    if(n.length < 3) return false;
+    return /^[A-Za-z\u0900-\u097F.\s]+$/.test(n);
+  }
+
+  function validMobile(m){
+    const num = String(m||"").replace(/\D/g,"");
+    return /^[6-9]\d{9}$/.test(num);
+  }
+
+  function validEmail(e){
+    const em = String(e||"").trim();
+    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em);
+  }
+
+  function getProfile(){
+    try{
+      const raw = localStorage.getItem(PROFILE_KEY);
+      if(!raw) return null;
+      return JSON.parse(raw);
+    }catch(e){
+      return null;
+    }
+  }
+
+  function setProfile(data){
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(data));
+  }
+
+  function profileIsValid(p){
+    if(!p) return false;
+    return validName(p.name) && validMobile(p.mobile) && validEmail(p.email);
+  }
+
+  function renderProfileUI(){
+    const p = getProfile();
+    if(!p){
+      $("userLine1").textContent = "Name: -";
+      $("userLine2").textContent = "Mobile: -";
+      $("userLine3").textContent = "Email: -";
+      $("userLine4").textContent = "Roll No: -";
+      $("profileBadge").style.display = "none";
+      lockCalculate(true);
+      return;
+    }
+
+    $("userLine1").textContent = `Name: ${p.name || "-"}`;
+    $("userLine2").textContent = `Mobile: ${p.mobile || "-"}`;
+    $("userLine3").textContent = `Email: ${p.email || "-"}`;
+    $("userLine4").textContent = `Roll No: ${p.roll || "-"}`;
+
+    const ok = profileIsValid(p);
+    $("profileBadge").style.display = ok ? "inline-flex" : "none";
+    lockCalculate(!ok);
+  }
+
+  function lockCalculate(locked){
+    $("calcBtn").disabled = locked;
+    $("lockNote").style.display = locked ? "block" : "none";
+  }
+
+  function fillProfileFormFromSaved(){
+    const p = getProfile();
+    $("uName").value = p?.name || "";
+    $("uMobile").value = p?.mobile || "";
+    $("uEmail").value = p?.email || "";
+    $("uRoll").value = p?.roll || "";
+  }
+
+  $("editProfileBtn").addEventListener("click", ()=>{
+    fillProfileFormFromSaved();
+    openProfileModal();
+  });
+
+  $("closeModalBtn").addEventListener("click", ()=>{
+    closeProfileModal();
+  });
+
+  $("profileModal").addEventListener("click", (e)=>{
+    if(e.target.id === "profileModal") closeProfileModal();
+  });
+
+  // ✅ FIRESTORE SAVE FUNCTION
+  async function saveUserToFirestore(userObj){
+    // collection: users, docId: mobile
+    const mobileId = String(userObj.mobile || "").replace(/\D/g,"");
+    const ref = doc(db, "users", mobileId);
+
+    await setDoc(ref, {
+      name: userObj.name || "",
+      mobile: mobileId,
+      email: userObj.email || "",
+      roll: userObj.roll || "",
+      source: "cutoff-page",
+      updatedAt: serverTimestamp(),
+      createdAt: userObj.createdAt ? userObj.createdAt : serverTimestamp()
+    }, { merge: true });
+  }
+
+  $("saveProfileBtn").addEventListener("click", async ()=>{
+    const name = normalizeName($("uName").value);
+    const mobile = String($("uMobile").value||"").replace(/\D/g,"");
+    const email = String($("uEmail").value||"").trim();
+    const roll = String($("uRoll").value||"").trim();
+
+    if(!validName(name)){
+      $("profileErr").textContent = "नाम सही लिखो (min 3 letters) ❌";
+      $("profileErr").style.display = "block";
+      return;
+    }
+    if(!validMobile(mobile)){
+      $("profileErr").textContent = "10 digit valid mobile डालो ❌";
+      $("profileErr").style.display = "block";
+      return;
+    }
+    if(!validEmail(email)){
+      $("profileErr").textContent = "Valid email डालो ❌";
+      $("profileErr").style.display = "block";
+      return;
+    }
+
+    try{
+      $("saveProfileBtn").disabled = true;
+      $("saveProfileBtn").innerHTML = `<span class="material-symbols-outlined">sync</span> Saving...`;
+
+      const existing = getProfile();
+      const payload = {
+        name,
+        mobile,
+        email,
+        roll,
+        updatedAt: Date.now(),
+        createdAt: existing?.createdAt || Date.now()
+      };
+
+      // ✅ Local Save
+      setProfile(payload);
+
+      // ✅ Firestore Save
+      await saveUserToFirestore(payload);
+
+      $("profileErr").style.display = "none";
+      closeProfileModal();
+      renderProfileUI();
+      setLastUpdated();
+
+      $("saveProfileBtn").disabled = false;
+      $("saveProfileBtn").innerHTML = `<span class="material-symbols-outlined">save</span> Save Details`;
+
+    }catch(err){
+      console.log(err);
+      $("profileErr").textContent = "Firebase save failed ❌ (rules check करो)";
+      $("profileErr").style.display = "block";
+      $("saveProfileBtn").disabled = false;
+      $("saveProfileBtn").innerHTML = `<span class="material-symbols-outlined">save</span> Save Details`;
+    }
+  });
+
+  async function loadExams(){
+    try{
+      setStatus("Loading...", "orange");
+      const url =
+        `https://www.googleapis.com/blogger/v3/blogs/${BLOGGER_ID}/posts`+
+        `?key=${BLOGGER_KEY}`+
+        `&labels=${encodeURIComponent(LABEL)}`+
+        `&maxResults=15`+
+        `&fields=items(title,content)`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+      posts = data.items || [];
+
+      $("examSelect").innerHTML = `<option value="">Select exam</option>`;
+      posts.forEach((p,i)=>{
+        const opt = document.createElement("option");
+        opt.value = i;
+        opt.textContent = p.title;
+        $("examSelect").appendChild(opt);
+      });
+
+      setStatus("Ready", "green");
+      setLastUpdated();
+    }catch(e){
+      setStatus("Failed", "red");
+      $("examSelect").innerHTML = `<option value="">Failed to load</option>`;
+    }
+  }
+
+  function renderMeta(cfg, title){
+    $("examTitleMini").textContent = title || cfg.examName || "-";
+    $("formsTxt").textContent = `Forms: ${(cfg.totalForms||"-").toLocaleString ? Number(cfg.totalForms).toLocaleString("en-IN") : (cfg.totalForms||"-")}`;
+    $("vacancyTxt").textContent = `Vacancy: ${cfg.vacancy ?? "-"}`;
+    $("marksTxt").textContent = `Total Marks: ${cfg.totalMarks ?? "-"}`;
+    $("ruleTxt").textContent = `+${cfg.pm ?? "-"} / -${cfg.nm ?? "-"}`;
+  }
+
+  $("examSelect").addEventListener("change", ()=>{
+    const idx = $("examSelect").value;
+    if(idx===""){
+      examConfig=null;
+      return;
+    }
+    const post = posts[Number(idx)];
+    selectedExamTitle = post.title || "";
+    const json = parseJSONFromHTML(post.content || "");
+    if(!json){
+      alert("JSON invalid ❌");
+      return;
+    }
+    examConfig=json;
+    renderMeta(examConfig, selectedExamTitle);
+    setLastUpdated();
+  });
+
+  function percentileCutoff(marksArr, topPercent){
+    if(!marksArr.length) return null;
+    const sorted = [...marksArr].sort((a,b)=>b-a);
+    const idx = Math.max(0, Math.floor((topPercent/100) * sorted.length) - 1);
+    return sorted[idx] ?? sorted[sorted.length-1];
+  }
+
+  async function fetchAllAttemptsForExam(examName){
+    const qy = query(
+      collection(db,"attempts"),
+      where("examName","==", examName)
+    );
+    const snap = await getDocs(qy);
+    const list=[];
+    snap.forEach(d=>list.push(d.data()));
+    return list;
+  }
+
+  function getCutoffForCategory(allAttempts, cat){
+    const catList = allAttempts.filter(x => String(x.category||"OTHER") === cat);
+    const marksArr = catList.map(x=>Number(x.marks||0)).filter(n=>!isNaN(n));
+    return percentileCutoff(marksArr, 10);
+  }
+
+  function setBox(id, val, totalMarks){
+    if(val===null || val===undefined){
+      $(id).textContent="--";
+      return;
+    }
+    const low = Math.max(0, Math.round(val-2));
+    const high = Math.min(totalMarks, Math.round(val+2));
+    $(id).textContent = `${low} - ${high}`;
+  }
+
+  $("calcBtn").addEventListener("click", async ()=>{
+    const p = getProfile();
+    if(!profileIsValid(p)){
+      alert("पहले सही Name + 10 digit Mobile + Email save करो ✅");
+      openProfileModal();
+      return;
+    }
+
+    if(!examConfig){ alert("पहले exam select कर ✅"); return; }
+
+    try{
+      setStatus("Calculating...", "orange");
+
+      const examName = examConfig.examName || selectedExamTitle;
+      const totalMarks = Number(examConfig.totalMarks||0);
+
+      const attempts = await fetchAllAttemptsForExam(examName);
+
+      if(!attempts.length){
+        setStatus("No data", "red");
+        alert("Firestore में इस exam का data नहीं मिला ❌");
+        return;
+      }
+
+      const gen = getCutoffForCategory(attempts, "GENERAL");
+      const obc = getCutoffForCategory(attempts, "OBC");
+      const sc  = getCutoffForCategory(attempts, "SC");
+      const st  = getCutoffForCategory(attempts, "ST");
+      const ews = getCutoffForCategory(attempts, "EWS");
+      const oth = getCutoffForCategory(attempts, "OTHER");
+
+      setBox("coGEN", gen, totalMarks);
+      setBox("coOBC", obc, totalMarks);
+      setBox("coSC", sc, totalMarks);
+      setBox("coST", st, totalMarks);
+      setBox("coEWS", ews, totalMarks);
+      setBox("coOTHER", oth, totalMarks);
+
+      setLastUpdated();
+      setStatus("Updated ✅", "green");
+    }catch(e){
+      console.log(e);
+      setStatus("Failed", "red");
+      alert("Firestore read error ❌ (rules check कर)");
+    }
+  });
+
+  // ✅ Init
+  loadExams();
+  setLastUpdated();
+
+  renderProfileUI();
+
+  const p0 = getProfile();
+  if(!profileIsValid(p0)){
+    fillProfileFormFromSaved();
+    openProfileModal();
+  }
+</script>
+</body>
+</html></html>
