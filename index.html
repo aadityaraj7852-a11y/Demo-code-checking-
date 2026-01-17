@@ -3,19 +3,35 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Mockrise • Cut-off</title>
+  <title>OMR Sheet Check - Mockrise</title>
 
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+
+  <!-- Charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
     body{font-family:"Lexend",sans-serif;background:#f5f5f8;min-height:100dvh;}
     .shadow-card{box-shadow:0 14px 40px rgba(0,0,0,.08);}
+    .chip{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:10px 12px;border-radius:999px;
+      background:rgba(10,10,194,.08);
+      color:#0a0ac2;font-weight:800;font-size:12px;
+      border:1px solid rgba(10,10,194,.10);
+      white-space:nowrap;
+    }
     .field{
       width:100%;height:54px;
       border:1.5px solid #dbdbe6;border-radius:18px;
-      padding:12px 14px;font-weight:800;outline:none;background:#fff;
+      padding:12px 14px;font-weight:800;outline:none;
+      background:#fff;
     }
     .field:focus{
       border-color:#0a0ac2;
@@ -31,190 +47,373 @@
       cursor:pointer; user-select:none;
     }
     .btnPrimary:active{transform:scale(.98);}
-    .chip{
-      display:inline-flex;align-items:center;gap:8px;
-      padding:10px 12px;border-radius:999px;
-      background:rgba(10,10,194,.08);
-      color:#0a0ac2;font-weight:900;font-size:12px;
-      border:1px solid rgba(10,10,194,.10);
-      white-space:nowrap;
+    .btnOutline{
+      width:100%;
+      background:#fff;border:2px solid #0a0ac2;
+      color:#0a0ac2;font-weight:900;padding:15px;border-radius:20px;
+      transition:.2s;
+      display:flex;align-items:center;justify-content:center;gap:10px;
+      cursor:pointer; user-select:none;
     }
-    .cutBox{
-      background:#fff;border:1px solid #eef0f6;
-      border-radius:18px;padding:14px;
-      box-shadow:0 10px 30px rgba(0,0,0,.05);
-      display:flex;flex-direction:column;gap:6px;
+    .btnOutline:active{transform:scale(.98);}
+
+    .optBtn{
+      display:flex;align-items:center;justify-content:center;
+      padding:10px 0;border-radius:14px;
+      border:1px solid #dbdbe6;
+      font-weight:900;
+      transition:.15s;
+      background:white;color:#111118;
+      cursor:pointer; user-select:none;
     }
-    .cutLabel{font-size:11px;color:#6b7280;font-weight:900;letter-spacing:.12em;text-transform:uppercase;}
-    .cutValue{font-size:18px;font-weight:900;color:#111118;line-height:1.1;}
-    .cutTag{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:900;color:#16a34a;}
-    .line{height:1px;background:linear-gradient(90deg, transparent, rgba(10,10,194,.25), transparent);}
-    .smallNote{font-size:11px;color:#6b7280;font-weight:800;line-height:1.4;}
+    .optBtn.active{
+      background:#0a0ac2;color:white;border-color:#0a0ac2;
+      box-shadow:0 10px 18px rgba(10,10,194,.18);
+    }
+
+    .tag{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:6px 10px;border-radius:999px;
+      font-size:11px;font-weight:900;border:1px solid #e5e7eb;
+    }
+    .tag.ok{background:#ecfdf5;color:#047857;border-color:#a7f3d0;}
+    .tag.bad{background:#fef2f2;color:#b91c1c;border-color:#fecaca;}
+    .tag.na{background:#f3f4f6;color:#374151;border-color:#e5e7eb;}
+
+    .diff-easy{background:#ecfdf5;color:#047857;border-color:#a7f3d0;}
+    .diff-moderate{background:#fffbeb;color:#b45309;border-color:#fde68a;}
+    .diff-hard{background:#fef2f2;color:#b91c1c;border-color:#fecaca;}
+
+    .popupWrap{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.55);
+      display:none;
+      align-items:center; justify-content:center;
+      padding:18px;
+      z-index:99999;
+    }
+    .popupWrap.show{display:flex;}
+    .popupBox{
+      width:100%; max-width:360px;
+      background:white;
+      border-radius:20px;
+      padding:16px;
+      box-shadow:0 20px 60px rgba(0,0,0,.25);
+    }
+
+    .help-float{
+      position:fixed; right:18px; bottom:18px;
+      width:56px; height:56px; border-radius:50%;
+      background:#25D366; color:white;
+      display:flex; align-items:center; justify-content:center;
+      box-shadow:0 10px 20px rgba(0,0,0,.2);
+      z-index:9999;
+      cursor:pointer;
+      transition:.2s;
+    }
+    .help-float:active{transform:scale(.95);}
   </style>
 </head>
 
 <body>
-<div class="max-w-[1100px] mx-auto min-h-screen bg-white shadow-xl flex flex-col overflow-hidden">
 
-  <!-- Header -->
-  <div class="flex items-center bg-white p-4 border-b border-gray-100 sticky top-0 z-20">
-    <button onclick="goBack()" class="text-[#0a0ac2] flex size-10 items-center justify-center cursor-pointer rounded-full hover:bg-[#0a0ac2]/10 transition">
-      <span class="material-symbols-outlined">arrow_back</span>
-    </button>
-    <h2 class="text-[#111118] text-lg font-black flex-1 text-center">Cut-off Checker</h2>
-    <div class="size-10"></div>
-  </div>
+<!-- ✅ WhatsApp Help Button -->
+<div class="help-float" id="helpBtn" title="Help">
+  <span class="material-symbols-outlined" style="font-size:28px;">support_agent</span>
+</div>
 
-  <!-- Title -->
-  <div class="px-6 pt-8 pb-4">
-    <h3 class="text-[#111118] text-2xl font-black text-center">Mockrise Auto Cut-off</h3>
-    <p class="text-[#60608a] text-sm mt-2 text-center">
-      Complete exam cut-off (overall) — Firestore से auto calculate ✅
-    </p>
-  </div>
-
-  <div class="px-6 pb-10 space-y-6">
-
-    <!-- Select Exam -->
-    <div class="rounded-2xl border border-[#dbdbe6] bg-white p-4 shadow-card">
-      <div class="text-[#0a0ac2] text-xs font-black uppercase tracking-widest mb-3">Exam Setup</div>
-
-      <label class="text-xs font-black text-gray-500 uppercase tracking-widest">Exam</label>
-      <select id="examSelect" class="field mt-2">
-        <option value="">Loading...</option>
-      </select>
-
-      <div class="mt-4 flex flex-wrap gap-2">
-        <span class="chip"><span class="material-symbols-outlined text-base">groups</span><span id="formsTxt">Forms: -</span></span>
-        <span class="chip"><span class="material-symbols-outlined text-base">event_seat</span><span id="vacancyTxt">Vacancy: -</span></span>
-        <span class="chip"><span class="material-symbols-outlined text-base">score</span><span id="marksTxt">Total Marks: -</span></span>
-        <span class="chip"><span class="material-symbols-outlined text-base">rule</span><span id="ruleTxt">+ -</span></span>
+<!-- ✅ Roll Already Checked Popup -->
+<div class="popupWrap" id="rollPopup">
+  <div class="popupBox">
+    <div class="flex items-start gap-3">
+      <div class="w-11 h-11 rounded-full bg-green-100 flex items-center justify-center text-green-700">
+        <span class="material-symbols-outlined">verified</span>
       </div>
-
-      <div class="mt-4">
-        <button id="calcBtn" class="btnPrimary">
-          <span class="material-symbols-outlined">analytics</span>
-          Calculate Overall Cut-off
-        </button>
-      </div>
-
-      <div class="mt-4 line"></div>
-
-      <div class="mt-4 flex items-center justify-between flex-wrap gap-3">
-        <div class="smallNote">
-          Last Updated: <span id="lastUpdated" style="color:#111118;font-weight:900;">-</span>
-        </div>
-        <div class="smallNote">
-          Status: <span id="statusTxt" style="color:#16a34a;font-weight:900;">Ready</span>
-        </div>
+      <div class="flex-1">
+        <div class="font-black text-lg text-[#111118]">Roll Already Checked</div>
+        <div class="text-sm text-gray-600 mt-1" id="rollPopupMsg">This roll no already checked.</div>
       </div>
     </div>
 
-    <!-- Warning -->
-    <div class="rounded-2xl border border-yellow-200 bg-yellow-50 p-4">
-      <div class="flex items-start gap-3">
-        <div class="size-10 rounded-xl bg-yellow-200/70 flex items-center justify-center text-yellow-800">
-          <span class="material-symbols-outlined">warning</span>
-        </div>
-        <div>
-          <div class="font-black text-[#111118] text-sm">Warning / Note</div>
-          <p class="text-xs text-yellow-900/80 mt-1 leading-relaxed">
-            यह data continuously update होता रहता है। Cut-off Firestore में saved students attempts के marks से auto calculate होती है।
-          </p>
-        </div>
-      </div>
+    <div class="mt-4 flex gap-3">
+      <button id="popupOk" class="btnPrimary" style="padding:12px;border-radius:16px;">
+        <span class="material-symbols-outlined">check_circle</span> OK
+      </button>
+      <button id="contactAdmin" class="btnOutline" style="padding:12px;border-radius:16px;">
+        <span class="material-symbols-outlined">support_agent</span> Contact Admin
+      </button>
     </div>
-
-    <!-- Cutoff Boxes -->
-    <div class="rounded-2xl border border-[#dbdbe6] bg-white p-4 shadow-card">
-      <div class="flex items-center justify-between gap-2 mb-3">
-        <h3 class="text-[#111118] font-black text-base">Category-wise Cutoff (Overall Exam)</h3>
-        <span class="text-xs font-black text-[#0a0ac2]" id="examTitleMini">-</span>
-      </div>
-
-      <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-        <div class="cutBox">
-          <div class="cutLabel">General</div>
-          <div class="cutValue" id="coGEN">--</div>
-          <div class="cutTag"><span class="material-symbols-outlined text-[16px]">check_circle</span> Auto</div>
-        </div>
-        <div class="cutBox">
-          <div class="cutLabel">OBC</div>
-          <div class="cutValue" id="coOBC">--</div>
-          <div class="cutTag"><span class="material-symbols-outlined text-[16px]">check_circle</span> Auto</div>
-        </div>
-        <div class="cutBox">
-          <div class="cutLabel">SC</div>
-          <div class="cutValue" id="coSC">--</div>
-          <div class="cutTag"><span class="material-symbols-outlined text-[16px]">check_circle</span> Auto</div>
-        </div>
-        <div class="cutBox">
-          <div class="cutLabel">ST</div>
-          <div class="cutValue" id="coST">--</div>
-          <div class="cutTag"><span class="material-symbols-outlined text-[16px]">check_circle</span> Auto</div>
-        </div>
-        <div class="cutBox">
-          <div class="cutLabel">EWS</div>
-          <div class="cutValue" id="coEWS">--</div>
-          <div class="cutTag"><span class="material-symbols-outlined text-[16px]">check_circle</span> Auto</div>
-        </div>
-        <div class="cutBox">
-          <div class="cutLabel">Other</div>
-          <div class="cutValue" id="coOTHER">--</div>
-          <div class="cutTag"><span class="material-symbols-outlined text-[16px]">check_circle</span> Auto</div>
-        </div>
-      </div>
-
-      <div class="mt-4 smallNote">
-        *यह cut-off पूरे exam के सभी students data से calculate होती है (shift/paperCode नहीं).
-      </div>
-    </div>
-
-    <!-- ✅ Telegram CTA वापस -->
-    <div class="rounded-2xl border border-[#0088cc]/20 bg-[#0088cc]/10 p-5">
-      <div class="flex items-start gap-3">
-        <div class="size-11 rounded-2xl bg-[#0088cc] flex items-center justify-center text-white shadow-lg">
-          <span class="material-symbols-outlined">send</span>
-        </div>
-        <div class="flex-1">
-          <div class="font-black text-[#111118] text-base">Join Mockrise Telegram</div>
-          <p class="text-xs text-[#0f3a52] font-bold mt-1 leading-relaxed">
-            Cut-off updates, result alerts, new exams & notifications instantly ✅
-          </p>
-          <button onclick="window.open('https://t.me/mockrise','_blank')" class="mt-4 w-full bg-[#0088cc] hover:bg-[#0077b5] text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 transition">
-            <span>Join Telegram</span>
-            <span class="material-symbols-outlined text-[20px]">open_in_new</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div class="text-center text-[11px] text-gray-400 font-bold pb-10">
-      Mockrise • Auto Cut-off System
-    </div>
-
   </div>
 </div>
 
-<!-- ✅ Firebase + Logic -->
+<div class="max-w-[1100px] mx-auto min-h-screen bg-white shadow-xl flex flex-col overflow-hidden">
+
+  <!-- ✅ Header -->
+  <div class="flex items-center bg-white p-4 border-b border-gray-100 sticky top-0 z-20">
+    <button id="backBtn" class="text-[#0a0ac2] flex size-10 items-center justify-center cursor-pointer rounded-full hover:bg-[#0a0ac2]/10 transition">
+      <span class="material-symbols-outlined">arrow_back</span>
+    </button>
+
+    <h2 class="text-[#111118] text-lg font-black flex-1 text-center">
+      OMR Sheet Check
+    </h2>
+
+    <div class="size-10"></div>
+  </div>
+
+  <!-- Screen Search -->
+  <section id="screenSearch" class="flex-1">
+    <div class="px-6 pt-8 pb-4">
+      <h3 class="text-[#111118] text-2xl font-black text-center">Check Your OMR Result</h3>
+      <p class="text-[#60608a] text-sm mt-2 text-center">Category + PaperCode Auto Detect ✅</p>
+    </div>
+
+    <div class="px-6 pb-10 space-y-6">
+
+      <div class="rounded-2xl border border-[#dbdbe6] bg-white p-4 shadow-card">
+        <div class="text-[#0a0ac2] text-xs font-black uppercase tracking-widest mb-3">Exam Setup</div>
+
+        <label class="text-[#60608a] text-xs font-black uppercase tracking-widest">Exam</label>
+        <select id="examSelect" class="field mt-2">
+          <option value="">Loading...</option>
+        </select>
+
+        <div class="grid md:grid-cols-2 gap-4 mt-4">
+          <div>
+            <label class="text-[#60608a] text-xs font-black uppercase tracking-widest">Shift</label>
+            <select id="shiftSelect" class="field mt-2">
+              <option value="">Select exam first</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="text-[#60608a] text-xs font-black uppercase tracking-widest">Paper Code</label>
+            <select id="paperSelect" class="field mt-2">
+              <option value="">Select shift first</option>
+            </select>
+            <p class="text-xs text-gray-500 mt-2">
+              Paper code नहीं पता? ✅ <b>Don't know</b> select करो (Auto detect हो जाएगा)
+            </p>
+          </div>
+        </div>
+
+        <div class="mt-4 flex flex-wrap gap-2">
+          <span class="chip"><span class="material-symbols-outlined text-base">quiz</span><span id="metaQ">- Questions</span></span>
+          <span class="chip"><span class="material-symbols-outlined text-base">score</span><span id="metaMarks">- Marks</span></span>
+          <span class="chip"><span class="material-symbols-outlined text-base">rule</span><span id="metaRule">+ -</span></span>
+          <span class="chip"><span class="material-symbols-outlined text-base">pin</span><span id="metaRoll">Roll digits: -</span></span>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-[#dbdbe6] bg-white p-4 shadow-card">
+        <div class="text-[#0a0ac2] text-xs font-black uppercase tracking-widest mb-3">Candidate (No Login)</div>
+
+        <!-- ✅ अब readonly हटाया -->
+        <div class="grid md:grid-cols-3 gap-3">
+          <input id="name" class="field" placeholder="Full Name"/>
+          <input id="mobile" class="field" placeholder="Mobile (10 digits)" maxlength="10"/>
+          <input id="email" class="field" placeholder="Email"/>
+        </div>
+
+        <p class="text-xs text-gray-500 mt-2">
+          ✅ एक mobile/email से सिर्फ 1 बार submit होगा।
+        </p>
+
+        <!-- ✅ CATEGORY -->
+        <div class="mt-4">
+          <label class="text-[#0a0ac2] text-xs font-black uppercase tracking-widest">Category</label>
+          <select id="category" class="field mt-2">
+            <option value="">Select category</option>
+            <option value="GENERAL">General</option>
+            <option value="OBC">OBC</option>
+            <option value="SC">SC</option>
+            <option value="ST">ST</option>
+            <option value="EWS">EWS</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </div>
+
+        <div class="mt-4">
+          <label class="text-[#0a0ac2] text-xs font-black uppercase tracking-widest">Roll Number</label>
+          <input id="roll" type="number" class="field mt-2 rounded-[26px]" placeholder="Enter roll number"/>
+          <p class="text-xs text-gray-500 mt-2" id="rollHint"></p>
+        </div>
+
+        <button id="continueBtn" class="btnPrimary mt-5">
+          <span class="material-symbols-outlined">arrow_forward</span>
+          Continue
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Screen Fill -->
+  <section id="screenFill" class="hidden flex-1">
+    <div class="px-6 pt-8 pb-4">
+      <h3 class="text-[#111118] text-2xl font-black text-center">Fill Answers</h3>
+      <p class="text-[#60608a] text-sm mt-2 text-center">कम से कम 1 question attempt करना जरूरी है ✅</p>
+    </div>
+
+    <div class="px-6 pb-10 space-y-4">
+      <div class="rounded-2xl border border-[#dbdbe6] bg-white p-4 shadow-card">
+        <div class="flex flex-wrap gap-2">
+          <span class="chip"><span class="material-symbols-outlined text-base">school</span><span id="fExam">-</span></span>
+          <span class="chip"><span class="material-symbols-outlined text-base">schedule</span><span id="fShift">-</span></span>
+          <span class="chip"><span class="material-symbols-outlined text-base">qr_code_2</span><span id="fPaper">-</span></span>
+          <span class="chip"><span class="material-symbols-outlined text-base">badge</span><span id="fRoll">-</span></span>
+          <span class="chip"><span class="material-symbols-outlined text-base">category</span><span id="fCat">-</span></span>
+        </div>
+      </div>
+
+      <div id="questionWrap" class="space-y-3"></div>
+
+      <button id="submitBtn" class="btnPrimary">
+        <span class="material-symbols-outlined">verified</span>
+        Submit & View Result
+      </button>
+    </div>
+  </section>
+
+  <!-- Screen Result -->
+  <section id="screenResult" class="hidden flex-1">
+    <div class="px-6 pt-8 pb-4">
+      <h3 class="text-[#111118] text-2xl font-black text-center">Result Card</h3>
+      <p class="text-[#60608a] text-sm mt-2 text-center">Category-wise Rank भी दिखेगा ✅</p>
+    </div>
+
+    <div class="px-6 pb-12 space-y-6">
+      <div class="rounded-2xl border border-[#dbdbe6] bg-white p-4 shadow-card">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <div class="text-xs text-[#60608a] font-black uppercase tracking-widest">Mockrise</div>
+            <div id="rName" class="text-lg font-black text-[#111118]">-</div>
+            <div class="text-sm text-[#60608a] mt-1">
+              <span id="rExam">-</span> • <span id="rShift">-</span> • Paper: <span id="rPaper">-</span> • Roll: <span id="rRoll">-</span>
+            </div>
+            <div class="text-sm text-[#60608a] mt-1">
+              Category: <b id="rCat">-</b>
+            </div>
+          </div>
+          <div class="size-12 rounded-2xl bg-[#0a0ac2]/10 flex items-center justify-center text-[#0a0ac2]">
+            <span class="material-symbols-outlined text-3xl">workspace_premium</span>
+          </div>
+        </div>
+
+        <div class="mt-4 grid md:grid-cols-5 gap-3">
+          <div class="rounded-xl bg-[#0a0ac2]/10 p-3">
+            <div class="text-xs font-black text-[#0a0ac2] uppercase tracking-widest">Marks</div>
+            <div id="rMarks" class="text-2xl font-black text-[#111118]">0</div>
+          </div>
+
+          <div class="rounded-xl bg-green-500/10 p-3">
+            <div class="text-xs font-black text-green-700 uppercase tracking-widest">Overall Rank</div>
+            <div id="rRankOverall" class="text-xl font-black text-green-700">-</div>
+          </div>
+
+          <div class="rounded-xl bg-emerald-500/10 p-3">
+            <div class="text-xs font-black text-emerald-700 uppercase tracking-widest">Shift Rank</div>
+            <div id="rRankShift" class="text-xl font-black text-emerald-700">-</div>
+          </div>
+
+          <div class="rounded-xl bg-purple-500/10 p-3">
+            <div class="text-xs font-black text-purple-700 uppercase tracking-widest">Category Rank</div>
+            <div id="rRankCat" class="text-xl font-black text-purple-700">-</div>
+          </div>
+
+          <div class="rounded-xl bg-indigo-500/10 p-3">
+            <div class="text-xs font-black text-indigo-700 uppercase tracking-widest">80%+ Students</div>
+            <div id="rAbove80" class="text-xl font-black text-indigo-700">0</div>
+          </div>
+        </div>
+
+        <div class="mt-3 grid md:grid-cols-4 gap-3">
+          <div class="rounded-xl bg-gray-100 p-3">
+            <div class="text-xs font-black text-[#60608a] uppercase tracking-widest">Correct</div>
+            <div id="rCorrect" class="text-xl font-black text-[#111118]">0</div>
+          </div>
+          <div class="rounded-xl bg-gray-100 p-3">
+            <div class="text-xs font-black text-[#60608a] uppercase tracking-widest">Wrong</div>
+            <div id="rWrong" class="text-xl font-black text-[#111118]">0</div>
+          </div>
+          <div class="rounded-xl bg-gray-100 p-3">
+            <div class="text-xs font-black text-[#60608a] uppercase tracking-widest">Not Attempt</div>
+            <div id="rNA" class="text-xl font-black text-[#111118]">0</div>
+          </div>
+          <div class="rounded-xl bg-gray-100 p-3">
+            <div class="text-xs font-black text-[#60608a] uppercase tracking-widest">Average</div>
+            <div id="rAvg" class="text-xl font-black text-[#111118]">0</div>
+          </div>
+        </div>
+
+        <div class="mt-4 grid md:grid-cols-2 gap-4">
+          <div class="rounded-2xl border border-gray-200 p-3">
+            <div class="font-black text-sm mb-2">Attempt Pie</div>
+            <canvas id="attemptPie" height="140"></canvas>
+          </div>
+          <div class="rounded-2xl border border-gray-200 p-3">
+            <div class="font-black text-sm mb-2">Difficulty Pie</div>
+            <canvas id="diffPie" height="140"></canvas>
+          </div>
+        </div>
+
+        <div class="mt-3 flex flex-wrap gap-2">
+          <span class="tag diff-easy" id="easyCount">Easy: 0</span>
+          <span class="tag diff-moderate" id="moderateCount">Moderate: 0</span>
+          <span class="tag diff-hard" id="hardCount">Hard: 0</span>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-[#dbdbe6] bg-white p-4 shadow-card">
+        <div class="font-black text-[#111118] mb-3">Question-wise Status</div>
+        <div class="overflow-x-auto">
+          <table class="w-full border border-gray-200 rounded-2xl overflow-hidden">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="text-left text-xs font-black p-3">Q</th>
+                <th class="text-left text-xs font-black p-3">Your</th>
+                <th class="text-left text-xs font-black p-3">Answer</th>
+                <th class="text-left text-xs font-black p-3">Status</th>
+                <th class="text-left text-xs font-black p-3">Difficulty</th>
+              </tr>
+            </thead>
+            <tbody id="qStatusRows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <button id="pdfBtn" class="btnPrimary">
+        <span class="material-symbols-outlined">download</span>
+        Download Invoice PDF
+      </button>
+
+      <button id="newBtn" class="btnOutline">
+        <span class="material-symbols-outlined">restart_alt</span>
+        New Result
+      </button>
+    </div>
+  </section>
+</div>
+
 <script type="module">
-  // ✅ Blogger
-  const BLOGGER_ID = "1505425628593992085";
-  const BLOGGER_KEY = "AIzaSyBaGppSDvKYBc_UGMDQ2JGmKi0V2FQa2ec";
-  const LABEL = "Result Name";
-  
-  // ✅ Firebase
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
   import {
-    getFirestore,
-    collection,
-    getDocs,
-    query,
-    where,
-    addDoc,
-    serverTimestamp
+    getFirestore, doc, getDoc, setDoc,
+    collection, getDocs, query, where
   } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-  
+
+  const WA_NUMBER = "917852097223";
+  const WA_MSG_HELP = "Sir, I am facing issues in chinking omr.";
+  const WA_MSG_ADMIN = "Sir, someone use my roll no and check my omr so I can't check now.";
+
+  const PDF_BRAND_NAME = "Mockrise";
+  const PDF_BRAND_EMAIL = "Email-aadityaraj7852@gmail.com";
+  const PDF_BRAND_MOBILE = "Mobile-7852097223";
+  const BRAND_LOGO_URL = "./logo.png";
+
+  const BLOGGER_ID = "1505425628593992085";
+  const BLOGGER_KEY = "AIzaSyBaGppSDvKYBc_UGMDQ2JGmKi0V2FQa2ec";
+  const RESULT_LABEL = "Result Name";
+
   const firebaseConfig = {
     apiKey: "AIzaSyC0QINninWOOCWh9Q1gomxHC0Y1_hrzjOU",
     authDomain: "test-series-app-8295f.firebaseapp.com",
@@ -223,221 +422,760 @@
     messagingSenderId: "576199084436",
     appId: "1:576199084436:web:875173574f2a0675a6a781"
   };
-  
+
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
-  
-  const $ = (id) => document.getElementById(id);
-  
-  let posts = [];
+
+  const $ = (id)=>document.getElementById(id);
+
+  let examPosts = [];
   let examConfig = null;
   let selectedExamTitle = "";
-  
-  function goBack() {
-    try { window.location.href = "go:back"; }
-    catch (e) { history.back(); }
+
+  // ✅ Guest User State (No Login)
+  let userState = { uid:"", name:"", mobile:"", email:"" };
+
+  let state = {
+    roll:"",
+    shift:"",
+    paperCode:"",
+    category:"",
+    answers:{},
+
+    marks:0,
+    correct:0,
+    wrong:0,
+    attempted:0,
+    notAttempted:0,
+    posMarks:0,
+    negMarks:0,
+
+    avgMarks:0,
+    overallRank:"-",
+    shiftRank:"-",
+    catRank:"-",
+    overallTotal:0,
+    shiftTotal:0,
+    catTotal:0,
+
+    above80:0,
+
+    difficultyMap:{},
+    diffCount:{easy:0,moderate:0,hard:0}
+  };
+
+  let attemptPieChart=null;
+  let diffPieChart=null;
+
+  function showScreen(screen){
+    ["screenSearch","screenFill","screenResult"].forEach(s=>$(s).classList.add("hidden"));
+    $(screen).classList.remove("hidden");
   }
-  window.goBack = goBack;
-  
-  function setStatus(text, color = "green") {
-    $("statusTxt").textContent = text;
-    $("statusTxt").style.color =
-      color === "green" ? "#16a34a" :
-      color === "red" ? "#dc2626" : "#f59e0b";
-  }
-  
-  function setLastUpdated() {
-    const d = new Date();
-    const date = d.toLocaleDateString("en-GB");
-    const time = d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
-    $("lastUpdated").textContent = `${date} • ${time}`;
-  }
-  
-  function parseJSONFromHTML(html) {
-    const match = (html || "").match(/\{[\s\S]*\}/);
-    if (!match) return null;
-    try { return JSON.parse(match[0]); } catch (e) { return null; }
-  }
-  
-  async function loadExams() {
-    try {
-      setStatus("Loading...", "orange");
-      const url =
-        `https://www.googleapis.com/blogger/v3/blogs/${BLOGGER_ID}/posts` +
-        `?key=${BLOGGER_KEY}` +
-        `&labels=${encodeURIComponent(LABEL)}` +
-        `&maxResults=15` +
-        `&fields=items(title,content)`;
-      
-      const res = await fetch(url);
-      const data = await res.json();
-      posts = data.items || [];
-      
-      $("examSelect").innerHTML = `<option value="">Select exam</option>`;
-      posts.forEach((p, i) => {
-        const opt = document.createElement("option");
-        opt.value = i;
-        opt.textContent = p.title;
-        $("examSelect").appendChild(opt);
-      });
-      
-      setStatus("Ready", "green");
-      setLastUpdated();
-    } catch (e) {
-      setStatus("Failed", "red");
-      $("examSelect").innerHTML = `<option value="">Failed to load</option>`;
-    }
-  }
-  
-  function renderMeta(cfg, title) {
-    $("examTitleMini").textContent = title || cfg.examName || "-";
-    $("formsTxt").textContent = `Forms: ${(cfg.totalForms||"-").toLocaleString ? Number(cfg.totalForms).toLocaleString("en-IN") : (cfg.totalForms||"-")}`;
-    $("vacancyTxt").textContent = `Vacancy: ${cfg.vacancy ?? "-"}`;
-    $("marksTxt").textContent = `Total Marks: ${cfg.totalMarks ?? "-"}`;
-    $("ruleTxt").textContent = `+${cfg.pm ?? "-"} / -${cfg.nm ?? "-"}`;
-  }
-  
-  $("examSelect").addEventListener("change", () => {
-    const idx = $("examSelect").value;
-    if (idx === "") {
-      examConfig = null;
-      return;
-    }
-    const post = posts[Number(idx)];
-    selectedExamTitle = post.title || "";
-    const json = parseJSONFromHTML(post.content || "");
-    if (!json) {
-      alert("JSON invalid ❌");
-      return;
-    }
-    examConfig = json;
-    renderMeta(examConfig, selectedExamTitle);
-    setLastUpdated();
+
+  $("backBtn").addEventListener("click", ()=>{
+    try{ window.location.href="go:back"; }
+    catch(e){ history.back(); }
   });
-  
-  function percentileCutoff(marksArr, topPercent) {
-    if (!marksArr.length) return null;
-    const sorted = [...marksArr].sort((a, b) => b - a);
-    const idx = Math.max(0, Math.floor((topPercent / 100) * sorted.length) - 1);
-    return sorted[idx] ?? sorted[sorted.length - 1];
+
+  $("helpBtn").onclick = ()=> window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(WA_MSG_HELP)}`,"_blank");
+  $("contactAdmin").onclick = ()=> window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(WA_MSG_ADMIN)}`,"_blank");
+  $("popupOk").onclick = ()=> $("rollPopup").classList.remove("show");
+
+  function parseExamJSON(html){
+    const match = (html||"").match(/\{[\s\S]*\}/);
+    if(!match) return null;
+    try{ return JSON.parse(match[0]); }catch(e){ return null; }
   }
-  
-  async function fetchAllAttemptsForExam(examName) {
-    const qy = query(
-      collection(db, "attempts"),
-      where("examName", "==", examName)
-    );
-    const snap = await getDocs(qy);
-    const list = [];
-    snap.forEach(d => list.push(d.data()));
-    return list;
+
+  async function fetchExams(){
+    const url =
+      `https://www.googleapis.com/blogger/v3/blogs/${BLOGGER_ID}/posts`+
+      `?key=${BLOGGER_KEY}`+
+      `&labels=${encodeURIComponent(RESULT_LABEL)}`+
+      `&maxResults=15`+
+      `&fields=items(title,content)`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+    examPosts = data.items || [];
+
+    $("examSelect").innerHTML = `<option value="">Select exam</option>`;
+    examPosts.forEach((p,i)=>{
+      const opt=document.createElement("option");
+      opt.value=i;
+      opt.textContent=p.title;
+      $("examSelect").appendChild(opt);
+    });
   }
-  
-  function getCutoffForCategory(allAttempts, cat) {
-    const catList = allAttempts.filter(x => String(x.category || "OTHER") === cat);
-    const marksArr = catList.map(x => Number(x.marks || 0)).filter(n => !isNaN(n));
-    return percentileCutoff(marksArr, 10);
+
+  function getTotalQFromAnswerKey(cfg=examConfig){
+    try{
+      const shifts=cfg.shifts||[];
+      const shiftName = shifts?.[0]?.name;
+      const paperCode = shifts?.[0]?.paperCodes?.[0];
+      const keyObj = ((cfg.answerKey||{})[shiftName]||{})[paperCode]||{};
+      const nums=Object.keys(keyObj).map(x=>Number(x)).filter(n=>!isNaN(n));
+      return nums.length? Math.max(...nums) : (cfg.totalQuestions||0);
+    }catch(e){
+      return cfg.totalQuestions||0;
+    }
   }
-  
-  function setBox(id, val, totalMarks) {
-    if (val === null || val === undefined) {
-      $(id).textContent = "--";
+
+  function updateMeta(cfg){
+    $("metaMarks").textContent = `${cfg.totalMarks??"-"} Marks`;
+    $("metaRule").textContent = `+${cfg.pm??"-"} / -${cfg.nm??"-"}`;
+    $("metaRoll").textContent = `Roll digits: ${cfg.rollDigits ?? "-"}`;
+    $("rollHint").textContent = cfg.rollDigits ? `Roll must be exactly ${cfg.rollDigits} digits.` : "";
+    $("metaQ").textContent = `${getTotalQFromAnswerKey(cfg)} Questions`;
+  }
+
+  function fillShifts(cfg){
+    $("shiftSelect").innerHTML = `<option value="">Select shift</option>`;
+    $("paperSelect").innerHTML = `<option value="">Select shift first</option>`;
+    (cfg.shifts||[]).forEach(s=>{
+      const opt=document.createElement("option");
+      opt.value=s.name;
+      opt.textContent=s.name;
+      $("shiftSelect").appendChild(opt);
+    });
+  }
+
+  function fillPaperCodes(cfg, shiftName){
+    const found=(cfg.shifts||[]).find(s=>s.name===shiftName);
+    $("paperSelect").innerHTML = `<option value="">Select paper code</option>`;
+    if(!found || !found.paperCodes?.length){
+      $("paperSelect").innerHTML = `<option value="">No paper codes</option>`;
       return;
     }
-    const low = Math.max(0, Math.round(val - 2));
-    const high = Math.min(totalMarks, Math.round(val + 2));
-    $(id).textContent = `${low} - ${high}`;
-  }
-  
-  // ✅ NEW: User Details Save in Firebase (No Login Needed)
-  async function saveUserDetails() {
-    const name = ($("userName")?.value || "").trim();
-    const mobile = ($("userMobile")?.value || "").trim();
-    const email = ($("userEmail")?.value || "").trim().toLowerCase();
-    
-    if (!name || !mobile || !email) {
-      alert("Name, Mobile, Email सब भरना जरूरी है ✅");
-      return false;
-    }
-    
-    // simple validations
-    if (!/^[6-9]\d{9}$/.test(mobile)) {
-      alert("Mobile number सही डालो (10 digits) ❌");
-      return false;
-    }
-    if (!/^\S+@\S+\.\S+$/.test(email)) {
-      alert("Email सही डालो ❌");
-      return false;
-    }
-    
-    const examName = examConfig?.examName || selectedExamTitle || "Unknown Exam";
-    
-    // ✅ Firestore Save (users collection)
-    await addDoc(collection(db, "users"), {
-      name,
-      mobile,
-      email,
-      examName,
-      createdAt: serverTimestamp(),
-      source: "cutoff_page"
+
+    found.paperCodes.forEach(pc=>{
+      const opt=document.createElement("option");
+      opt.value=pc;
+      opt.textContent=pc;
+      $("paperSelect").appendChild(opt);
     });
-    
+
+    const dk=document.createElement("option");
+    dk.value="__DONT_KNOW__";
+    dk.textContent="Don't know (Auto Detect)";
+    $("paperSelect").appendChild(dk);
+  }
+
+  $("examSelect").addEventListener("change", ()=>{
+    const idx=$("examSelect").value;
+    if(!idx){ examConfig=null; return; }
+    const post=examPosts[Number(idx)];
+    selectedExamTitle=post.title||"";
+    const cfg=parseExamJSON(post.content||"");
+    if(!cfg){ alert("JSON invalid ❌"); return; }
+    examConfig=cfg;
+    updateMeta(cfg);
+    fillShifts(cfg);
+  });
+
+  $("shiftSelect").addEventListener("change", ()=>{
+    if(!examConfig) return;
+    fillPaperCodes(examConfig, $("shiftSelect").value);
+  });
+
+  function getAnswerKeyForPaper(shiftName, paperCode){
+    const full=examConfig.answerKey||{};
+    return (full[shiftName]||{})[paperCode]||{};
+  }
+
+  function getAnswerKey(){
+    return getAnswerKeyForPaper(state.shift, state.paperCode);
+  }
+
+  function autoDetectPaperCode(userAns){
+    const shiftObj = examConfig?.answerKey?.[state.shift] || {};
+    const paperCodes = Object.keys(shiftObj);
+    if(!paperCodes.length) return null;
+
+    let bestPaper = paperCodes[0];
+    let bestScore = -1;
+
+    for(const pc of paperCodes){
+      const key = shiftObj[pc] || {};
+      let score=0, attempted=0;
+
+      Object.keys(userAns||{}).forEach(q=>{
+        const ua = String(userAns[q]||"").toUpperCase();
+        if(!ua) return;
+        attempted++;
+        const ka = String(key[q]||"").toUpperCase();
+        if(ua && ka && ua===ka) score++;
+      });
+
+      const ratio = attempted ? (score/attempted) : 0;
+      const finalScore = score + ratio;
+      if(finalScore > bestScore){
+        bestScore = finalScore;
+        bestPaper = pc;
+      }
+    }
+    return bestPaper;
+  }
+
+  function buildFillUI(){
+    const key=getAnswerKey();
+    const nums=Object.keys(key).map(x=>Number(x)).filter(n=>!isNaN(n));
+    const maxQ=nums.length? Math.max(...nums) : getTotalQFromAnswerKey(examConfig);
+
+    const wrap=$("questionWrap");
+    wrap.innerHTML="";
+    for(let q=1;q<=maxQ;q++){
+      const card=document.createElement("div");
+      card.className="rounded-2xl border border-[#dbdbe6] bg-white p-4 shadow-card";
+      card.innerHTML=`
+        <div class="flex items-center justify-between mb-3">
+          <div class="font-black text-[#111118]">Q${q}</div>
+          <span class="tag na">${state.answers[q]?"Attempted":"Not Attempted"}</span>
+        </div>
+        <div class="grid grid-cols-5 gap-2">
+          ${["A","B","C","D","E"].map(opt=>`
+            <button type="button" class="optBtn ${state.answers[q]===opt?'active':''}" data-q="${q}" data-opt="${opt}">${opt}</button>
+          `).join("")}
+        </div>
+      `;
+      wrap.appendChild(card);
+    }
+
+    wrap.querySelectorAll(".optBtn").forEach(btn=>{
+      btn.onclick=()=>{
+        const q=Number(btn.dataset.q);
+        const opt=btn.dataset.opt;
+        state.answers[q]=opt;
+        buildFillUI();
+      };
+    });
+  }
+
+  function calcMarks(){
+    const key=getAnswerKey();
+    const pm=Number(examConfig.pm||1);
+    const nm=Number(examConfig.nm||0);
+
+    const nums=Object.keys(key).map(x=>Number(x)).filter(n=>!isNaN(n));
+    const maxQ=nums.length? Math.max(...nums) : getTotalQFromAnswerKey(examConfig);
+
+    let correct=0, wrong=0, attempted=0;
+    for(let i=1;i<=maxQ;i++){
+      const ans=state.answers[i]||"";
+      if(ans){
+        attempted++;
+        if(String(ans).toUpperCase()===String(key[i]||"").toUpperCase()) correct++;
+        else wrong++;
+      }
+    }
+
+    state.correct=correct;
+    state.wrong=wrong;
+    state.attempted=attempted;
+    state.notAttempted=Math.max(0,maxQ-attempted);
+
+    state.posMarks=Number((correct*pm).toFixed(2));
+    state.negMarks=Number((wrong*nm).toFixed(2));
+    state.marks=Math.max(0, Number((state.posMarks-state.negMarks).toFixed(2)));
+  }
+
+  function attemptDocId(){
+    return `${examConfig.examName}_${state.shift}_${state.paperCode}_${state.roll}`;
+  }
+
+  // ✅ Guest Unique Lock: same user data only once
+  function guestUseDocId(){
+    // user can only submit ONCE using same mobile+email for same exam
+    return `${examConfig.examName}_${userState.mobile}`;
+  }
+
+  function isValidEmail(email){
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email||"").trim());
+  }
+
+  function isValidMobile(m){
+    return /^\d{10}$/.test(String(m||"").trim());
+  }
+
+  async function ensureGuestOnceOnly(){
+    const ref = doc(db,"guest_once_only", guestUseDocId());
+    const snap = await getDoc(ref);
+    if(snap.exists()){
+      return false; // already used
+    }
     return true;
   }
-  
-  $("calcBtn").addEventListener("click", async () => {
-    if (!examConfig) { alert("पहले exam select कर ✅"); return; }
-    
-    try {
-      setStatus("Saving User...", "orange");
-      
-      // ✅ पहले user data save होगा
-      const ok = await saveUserDetails();
-      if (!ok) {
-        setStatus("Fill Details", "red");
-        return;
+
+  async function markGuestUsed(){
+    await setDoc(doc(db,"guest_once_only", guestUseDocId()),{
+      examName: examConfig.examName,
+      mobile: userState.mobile,
+      email: userState.email,
+      name: userState.name,
+      usedAt: new Date().toISOString()
+    },{merge:false});
+  }
+
+  async function saveGuestProfile(){
+    // store user profile by mobile
+    await setDoc(doc(db,"guest_profiles", userState.mobile),{
+      name:userState.name,
+      mobile:userState.mobile,
+      email:userState.email,
+      updatedAt:new Date().toISOString()
+    },{merge:true});
+  }
+
+  async function saveAttempt(){
+    await setDoc(doc(db,"attempts",attemptDocId()),{
+      uid:userState.uid,
+      ownerName:userState.name,
+
+      name:userState.name,
+      mobile:userState.mobile,
+      email:userState.email,
+
+      roll:String(state.roll),
+      category:String(state.category||"OTHER"),
+
+      examName:examConfig.examName,
+      shift:state.shift,
+      paperCode:state.paperCode,
+
+      totalMarks:Number(examConfig.totalMarks||0),
+      pm:Number(examConfig.pm||1),
+      nm:Number(examConfig.nm||0),
+
+      correct:state.correct,
+      wrong:state.wrong,
+      attempted:state.attempted,
+      notAttempted:state.notAttempted,
+      posMarks:state.posMarks,
+      negMarks:state.negMarks,
+      marks:state.marks,
+
+      answers:state.answers,
+      createdAt:new Date().toISOString()
+    },{merge:false});
+  }
+
+  async function fetchAttemptsByPaper(){
+    const qy=query(collection(db,"attempts"),
+      where("examName","==",examConfig.examName),
+      where("shift","==",state.shift),
+      where("paperCode","==",state.paperCode)
+    );
+    const snap=await getDocs(qy);
+    const arr=[];
+    snap.forEach(d=>arr.push(d.data()));
+    return arr;
+  }
+
+  async function fetchAttemptsByShift(){
+    const qy=query(collection(db,"attempts"),
+      where("examName","==",examConfig.examName),
+      where("shift","==",state.shift)
+    );
+    const snap=await getDocs(qy);
+    const arr=[];
+    snap.forEach(d=>arr.push(d.data()));
+    return arr;
+  }
+
+  async function fetchAttemptsOverall(){
+    const qy=query(collection(db,"attempts"),
+      where("examName","==",examConfig.examName)
+    );
+    const snap=await getDocs(qy);
+    const arr=[];
+    snap.forEach(d=>arr.push(d.data()));
+    return arr;
+  }
+
+  async function fetchAttemptsByCategory(){
+    const qy=query(collection(db,"attempts"),
+      where("examName","==",examConfig.examName),
+      where("shift","==",state.shift),
+      where("paperCode","==",state.paperCode),
+      where("category","==",String(state.category||"OTHER"))
+    );
+    const snap=await getDocs(qy);
+    const arr=[];
+    snap.forEach(d=>arr.push(d.data()));
+    return arr;
+  }
+
+  function formatRank(rank,total){
+    if(!rank || rank==="-" || !total) return "-";
+    return `${rank}/${total}`;
+  }
+
+  async function computeRanksAndStats(){
+    const paperArr=await fetchAttemptsByPaper();
+    const shiftArr=await fetchAttemptsByShift();
+    const overallArr=await fetchAttemptsOverall();
+    const catArr = await fetchAttemptsByCategory();
+    const totalMarks=Number(examConfig.totalMarks||0);
+
+    const shiftSorted=[...shiftArr].sort((a,b)=>Number(b.marks||0)-Number(a.marks||0));
+    const overallSorted=[...overallArr].sort((a,b)=>Number(b.marks||0)-Number(a.marks||0));
+    const catSorted=[...catArr].sort((a,b)=>Number(b.marks||0)-Number(a.marks||0));
+
+    const rankOverall = overallSorted.findIndex(x=>String(x.roll)===String(state.roll)) + 1;
+    const rankShift = shiftSorted.findIndex(x=>String(x.roll)===String(state.roll)) + 1;
+    const rankCat = catSorted.findIndex(x=>String(x.roll)===String(state.roll)) + 1;
+
+    state.overallTotal = overallSorted.length || 1;
+    state.shiftTotal = shiftSorted.length || 1;
+    state.catTotal = catSorted.length || 1;
+
+    state.overallRank = rankOverall > 0 ? rankOverall : "-";
+    state.shiftRank = rankShift > 0 ? rankShift : "-";
+    state.catRank = rankCat > 0 ? rankCat : "-";
+
+    let sum=0;
+    paperArr.forEach(x=>sum += Number(x.marks||0));
+    state.avgMarks = paperArr.length ? Number((sum/paperArr.length).toFixed(2)) : state.marks;
+
+    let above80=0;
+    paperArr.forEach(x=>{
+      const m=Number(x.marks||0);
+      const pct= totalMarks ? (m/totalMarks)*100 : 0;
+      if(pct >= 80) above80++;
+    });
+    state.above80 = above80;
+
+    const key=getAnswerKey();
+    const nums=Object.keys(key).map(x=>Number(x)).filter(n=>!isNaN(n));
+    const maxQ=nums.length? Math.max(...nums) : getTotalQFromAnswerKey(examConfig);
+
+    const correctCount={}, attemptCount={};
+    for(let q=1;q<=maxQ;q++){ correctCount[q]=0; attemptCount[q]=0; }
+
+    paperArr.forEach(at=>{
+      const ansObj=at.answers||{};
+      for(let q=1;q<=maxQ;q++){
+        const a=ansObj[q]||ansObj[String(q)]||"";
+        if(a){
+          attemptCount[q]++;
+          if(String(a).toUpperCase()===String(key[q]||"").toUpperCase()) correctCount[q]++;
+        }
       }
-      
-      setStatus("Calculating...", "orange");
-      
-      const examName = examConfig.examName || selectedExamTitle;
-      const totalMarks = Number(examConfig.totalMarks || 0);
-      
-      const attempts = await fetchAllAttemptsForExam(examName);
-      
-      if (!attempts.length) {
-        setStatus("No data", "red");
-        alert("Firestore में इस exam का data नहीं मिला ❌");
-        return;
-      }
-      
-      const gen = getCutoffForCategory(attempts, "GENERAL");
-      const obc = getCutoffForCategory(attempts, "OBC");
-      const sc = getCutoffForCategory(attempts, "SC");
-      const st = getCutoffForCategory(attempts, "ST");
-      const ews = getCutoffForCategory(attempts, "EWS");
-      const oth = getCutoffForCategory(attempts, "OTHER");
-      
-      setBox("coGEN", gen, totalMarks);
-      setBox("coOBC", obc, totalMarks);
-      setBox("coSC", sc, totalMarks);
-      setBox("coST", st, totalMarks);
-      setBox("coEWS", ews, totalMarks);
-      setBox("coOTHER", oth, totalMarks);
-      
-      setLastUpdated();
-      setStatus("Updated ✅", "green");
-      
-    } catch (e) {
-      console.log(e);
-      setStatus("Failed", "red");
-      alert("Firestore error ❌ (rules check कर)");
+    });
+
+    const ratios=[];
+    for(let q=1;q<=maxQ;q++){
+      const r=attemptCount[q]? (correctCount[q]/attemptCount[q]) : 0;
+      ratios.push({q,r});
     }
+    ratios.sort((a,b)=>b.r-a.r);
+
+    const easyCount=Math.max(1,Math.floor(maxQ*0.33));
+    const hardCount=Math.max(1,Math.floor(maxQ*0.33));
+    const easySet=new Set(ratios.slice(0,easyCount).map(x=>x.q));
+    const hardSet=new Set(ratios.slice(ratios.length-hardCount).map(x=>x.q));
+
+    let easy=0,moderate=0,hard=0;
+    const diffMap={};
+    for(let q=1;q<=maxQ;q++){
+      if(easySet.has(q)){ diffMap[q]="Easy"; easy++; }
+      else if(hardSet.has(q)){ diffMap[q]="Hard"; hard++; }
+      else { diffMap[q]="Moderate"; moderate++; }
+    }
+    state.difficultyMap=diffMap;
+    state.diffCount={easy,moderate,hard};
+  }
+
+  function renderCharts(){
+    const aCtx=$("attemptPie").getContext("2d");
+    if(attemptPieChart) attemptPieChart.destroy();
+    attemptPieChart=new Chart(aCtx,{
+      type:"pie",
+      data:{labels:["Correct","Wrong","Not Attempted"],datasets:[{data:[state.correct,state.wrong,state.notAttempted]}]},
+      options:{responsive:true,plugins:{legend:{position:"bottom"}}}
+    });
+
+    const dCtx=$("diffPie").getContext("2d");
+    if(diffPieChart) diffPieChart.destroy();
+    diffPieChart=new Chart(dCtx,{
+      type:"pie",
+      data:{labels:["Easy","Moderate","Hard"],datasets:[{data:[state.diffCount.easy,state.diffCount.moderate,state.diffCount.hard]}]},
+      options:{responsive:true,plugins:{legend:{position:"bottom"}}}
+    });
+
+    $("easyCount").textContent=`Easy: ${state.diffCount.easy}`;
+    $("moderateCount").textContent=`Moderate: ${state.diffCount.moderate}`;
+    $("hardCount").textContent=`Hard: ${state.diffCount.hard}`;
+  }
+
+  function renderQTable(){
+    const key=getAnswerKey();
+    const nums=Object.keys(key).map(x=>Number(x)).filter(n=>!isNaN(n));
+    const maxQ=nums.length? Math.max(...nums) : getTotalQFromAnswerKey(examConfig);
+
+    const tb=$("qStatusRows");
+    tb.innerHTML="";
+    for(let q=1;q<=maxQ;q++){
+      const your=state.answers[q]||"";
+      const ans=String(key[q]||"");
+      let status="Not Attempted";
+      if(your){
+        status=(String(your).toUpperCase()===String(ans).toUpperCase()) ? "Correct" : "Wrong";
+      }
+
+      const tagClass=status==="Correct"?"ok":(status==="Wrong"?"bad":"na");
+      const diff=state.difficultyMap[q]||"Moderate";
+      const diffClass=diff==="Easy"?"diff-easy":(diff==="Hard"?"diff-hard":"diff-moderate");
+
+      const tr=document.createElement("tr");
+      tr.innerHTML=`
+        <td class="p-3 font-black">Q${q}</td>
+        <td class="p-3 font-black">${your||"-"}</td>
+        <td class="p-3">${ans||"-"}</td>
+        <td class="p-3"><span class="tag ${tagClass}">${status}</span></td>
+        <td class="p-3"><span class="tag ${diffClass}">${diff}</span></td>
+      `;
+      tb.appendChild(tr);
+    }
+  }
+
+  function renderSummary(){
+    $("rName").textContent=userState.name||"-";
+    $("rExam").textContent=examConfig.examName||selectedExamTitle||"-";
+    $("rShift").textContent=state.shift||"-";
+    $("rPaper").textContent=state.paperCode||"-";
+    $("rRoll").textContent=state.roll||"-";
+    $("rCat").textContent=state.category||"-";
+
+    $("rMarks").textContent=`${state.marks} / ${examConfig.totalMarks}`;
+    $("rRankOverall").textContent = formatRank(state.overallRank, state.overallTotal);
+    $("rRankShift").textContent = formatRank(state.shiftRank, state.shiftTotal);
+    $("rRankCat").textContent = formatRank(state.catRank, state.catTotal);
+
+    $("rAbove80").textContent = state.above80;
+
+    $("rCorrect").textContent=state.correct;
+    $("rWrong").textContent=state.wrong;
+    $("rNA").textContent=state.notAttempted;
+    $("rAvg").textContent=state.avgMarks;
+  }
+
+  async function loadImageAsDataURL(url){
+    try{
+      const res=await fetch(url,{mode:"cors"});
+      const blob=await res.blob();
+      return await new Promise((resolve)=>{
+        const reader=new FileReader();
+        reader.onload=()=>resolve(reader.result);
+        reader.readAsDataURL(blob);
+      });
+    }catch(e){ return null; }
+  }
+
+  async function downloadInvoicePDF(){
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF("p","mm","a4");
+    const PAGE_W = 210;
+    const margin = 10;
+
+    pdf.setDrawColor(40);
+    pdf.rect(margin, margin, PAGE_W - margin*2, 277);
+
+    pdf.setFontSize(14);
+    pdf.setFont(undefined,"bold");
+    pdf.text("RESULT INVOICE", PAGE_W/2, margin+10, {align:"center"});
+
+    pdf.setFontSize(10);
+    pdf.setFont(undefined,"normal");
+    pdf.text("Complete OMR Analysis by Mockrise", PAGE_W/2, margin+16, {align:"center"});
+
+    let y = margin + 22;
+    pdf.setDrawColor(130);
+    pdf.rect(margin, y, PAGE_W - margin*2, 26);
+
+    const logo = await loadImageAsDataURL(BRAND_LOGO_URL);
+    if(logo){
+      try{ pdf.addImage(logo, "PNG", PAGE_W - margin - 34, y+4, 26, 18); }catch(e){}
+    }
+
+    pdf.setFontSize(11);
+    pdf.setFont(undefined,"bold");
+    pdf.text(PDF_BRAND_NAME, margin+4, y+10);
+    pdf.setFontSize(10);
+    pdf.text(PDF_BRAND_EMAIL, margin+4, y+17);
+    pdf.text(PDF_BRAND_MOBILE, margin+4, y+23);
+
+    y += 32;
+    pdf.setDrawColor(130);
+    pdf.rect(margin, y, (PAGE_W - margin*2)/2, 44);
+    pdf.rect(margin + (PAGE_W - margin*2)/2, y, (PAGE_W - margin*2)/2, 44);
+
+    pdf.setFontSize(9);
+    pdf.setFont(undefined,"bold");
+    pdf.text("Candidate Details", margin+4, y+8);
+    pdf.setFont(undefined,"normal");
+
+    pdf.text(`Name: ${userState.name}`, margin+4, y+16);
+    pdf.text(`Mobile: ${userState.mobile}`, margin+4, y+22);
+    pdf.text(`Email: ${userState.email}`, margin+4, y+28);
+    pdf.text(`Roll No: ${state.roll}`, margin+4, y+34);
+    pdf.text(`Category: ${state.category}`, margin+4, y+40);
+
+    pdf.save(`Mockrise_Result_${state.roll}.pdf`);
+  }
+
+  function isValidRoll(roll){
+    const digits = Number(examConfig?.rollDigits || 0);
+    if(!digits) return true;
+    return new RegExp(`^\\d{${digits}}$`).test(String(roll));
+  }
+
+  // ✅ Continue
+  $("continueBtn").addEventListener("click", async ()=>{
+    if(!examConfig){ alert("Exam select करो"); return; }
+
+    // ✅ User details
+    const n = $("name").value.trim();
+    const m = $("mobile").value.trim();
+    const e = $("email").value.trim();
+
+    if(!n){ alert("Name required"); return; }
+    if(!isValidMobile(m)){ alert("Mobile must be 10 digits ✅"); return; }
+    if(!isValidEmail(e)){ alert("Valid email required ✅"); return; }
+
+    userState.name = n;
+    userState.mobile = m;
+    userState.email = e;
+    userState.uid = "guest_" + m;
+
+    const shift=$("shiftSelect").value;
+    let paper=$("paperSelect").value;
+    const roll=$("roll").value.trim();
+    const cat=$("category").value;
+
+    if(!shift){ alert("Shift select करो"); return; }
+    if(!paper){ alert("Paper code select करो"); return; }
+    if(!cat){ alert("Category select करो"); return; }
+    if(!roll){ alert("Roll number required"); return; }
+    if(!isValidRoll(roll)){
+      alert(`Roll must be exactly ${examConfig.rollDigits} digits`);
+      return;
+    }
+
+    // ✅ same mobile/email only once lock
+    const canUse = await ensureGuestOnceOnly();
+    if(!canUse){
+      alert("यह mobile/email पहले ही use हो चुका है ✅ अब दुबारा submit नहीं कर सकते!");
+      return;
+    }
+
+    // ✅ save guest profile
+    await saveGuestProfile();
+
+    state.shift=shift;
+    state.paperCode=paper;
+    state.roll=roll;
+    state.category=cat;
+
+    $("fExam").textContent=examConfig.examName||selectedExamTitle||"-";
+    $("fShift").textContent=shift;
+    $("fPaper").textContent=paper==="__DONT_KNOW__" ? "Auto Detect" : paper;
+    $("fRoll").textContent=roll;
+    $("fCat").textContent=cat;
+
+    if(paper !== "__DONT_KNOW__"){
+      const docId = `${examConfig.examName}_${shift}_${paper}_${roll}`;
+      const existing = await getDoc(doc(db,"attempts", docId));
+
+      if(existing.exists()){
+        const d=existing.data();
+        if(d.uid && d.uid !== userState.uid){
+          $("rollPopupMsg").innerHTML = `
+            This roll no already checked ✅<br>
+            <b>Checked by:</b> ${d.ownerName || d.name || "User"}
+          `;
+          $("rollPopup").classList.add("show");
+          return;
+        }
+      }
+    }
+
+    state.answers={};
+
+    if(paper==="__DONT_KNOW__"){
+      const found=(examConfig.shifts||[]).find(s=>s.name===shift);
+      const firstPaper=found?.paperCodes?.[0];
+      state.paperCode=firstPaper || "";
+      buildFillUI();
+      state.paperCode="__DONT_KNOW__";
+    }else{
+      buildFillUI();
+    }
+
+    showScreen("screenFill");
   });
-  
-  // Init
-  loadExams();
-  setLastUpdated();
+
+  // ✅ Submit
+  $("submitBtn").addEventListener("click", async ()=>{
+    const attemptedCount = Object.values(state.answers || {}).filter(Boolean).length;
+    if(attemptedCount < 1){
+      alert("कम से कम 1 question attempt करना जरूरी है ✅");
+      return;
+    }
+
+    if(state.paperCode==="__DONT_KNOW__"){
+      const detected = autoDetectPaperCode(state.answers);
+      if(!detected){
+        alert("Auto Detect failed ❌ Paper code not found");
+        return;
+      }
+      state.paperCode = detected;
+      $("fPaper").textContent = detected;
+      alert(`Auto detected Paper Code ✅: ${detected}`);
+    }
+
+    const key=getAnswerKey();
+    if(!key || Object.keys(key).length===0){
+      alert("AnswerKey missing for this Shift/Paper ❌");
+      return;
+    }
+
+    calcMarks();
+
+    const docId = attemptDocId();
+    const existing = await getDoc(doc(db,"attempts", docId));
+    if(existing.exists()){
+      const d=existing.data();
+      if(d.uid && d.uid !== userState.uid){
+        $("rollPopupMsg").innerHTML = `
+          This roll no already checked ✅<br>
+          <b>Checked by:</b> ${d.ownerName || d.name || "User"}
+        `;
+        $("rollPopup").classList.add("show");
+        return;
+      }
+    }
+
+    // ✅ Save attempt
+    await saveAttempt();
+
+    // ✅ Mark this guest mobile used (अब दुबारा use नहीं होगा)
+    await markGuestUsed();
+
+    await computeRanksAndStats();
+    renderSummary();
+    renderCharts();
+    renderQTable();
+    showScreen("screenResult");
+  });
+
+  $("pdfBtn").addEventListener("click", downloadInvoicePDF);
+  $("newBtn").addEventListener("click", ()=>location.reload());
+
+  // ✅ Start app WITHOUT login
+  await fetchExams();
+  showScreen("screenSearch");
 </script>
+
 </body>
 </html>
