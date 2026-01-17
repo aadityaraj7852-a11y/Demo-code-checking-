@@ -130,8 +130,8 @@
         <span class="material-symbols-outlined">verified</span>
       </div>
       <div class="flex-1">
-        <div class="font-black text-lg text-[#111118]">Roll Already Checked</div>
-        <div class="text-sm text-gray-600 mt-1" id="rollPopupMsg">This roll no already checked.</div>
+        <div class="font-black text-lg text-[#111118]">Already Submitted</div>
+        <div class="text-sm text-gray-600 mt-1" id="rollPopupMsg">This mobile already used.</div>
       </div>
     </div>
 
@@ -161,7 +161,7 @@
     <div class="size-10"></div>
   </div>
 
-  <!-- Screen Search -->
+  <!-- ✅ Screen Search -->
   <section id="screenSearch" class="flex-1">
     <div class="px-6 pt-8 pb-4">
       <h3 class="text-[#111118] text-2xl font-black text-center">Check Your OMR Result</h3>
@@ -170,6 +170,7 @@
 
     <div class="px-6 pb-10 space-y-6">
 
+      <!-- ✅ Exam Setup -->
       <div class="rounded-2xl border border-[#dbdbe6] bg-white p-4 shadow-card">
         <div class="text-[#0a0ac2] text-xs font-black uppercase tracking-widest mb-3">Exam Setup</div>
 
@@ -205,19 +206,16 @@
         </div>
       </div>
 
+      <!-- ✅ Candidate -->
       <div class="rounded-2xl border border-[#dbdbe6] bg-white p-4 shadow-card">
-        <div class="text-[#0a0ac2] text-xs font-black uppercase tracking-widest mb-3">Candidate (No Login)</div>
+        <div class="text-[#0a0ac2] text-xs font-black uppercase tracking-widest mb-3">Candidate</div>
 
-        <!-- ✅ अब readonly हटाया -->
+        <!-- ✅ अब editable (Login नहीं है) -->
         <div class="grid md:grid-cols-3 gap-3">
           <input id="name" class="field" placeholder="Full Name"/>
-          <input id="mobile" class="field" placeholder="Mobile (10 digits)" maxlength="10"/>
+          <input id="mobile" class="field" placeholder="Mobile (10 digits)"/>
           <input id="email" class="field" placeholder="Email"/>
         </div>
-
-        <p class="text-xs text-gray-500 mt-2">
-          ✅ एक mobile/email से सिर्फ 1 बार submit होगा।
-        </p>
 
         <!-- ✅ CATEGORY -->
         <div class="mt-4">
@@ -247,7 +245,7 @@
     </div>
   </section>
 
-  <!-- Screen Fill -->
+  <!-- ✅ Screen Fill -->
   <section id="screenFill" class="hidden flex-1">
     <div class="px-6 pt-8 pb-4">
       <h3 class="text-[#111118] text-2xl font-black text-center">Fill Answers</h3>
@@ -274,7 +272,7 @@
     </div>
   </section>
 
-  <!-- Screen Result -->
+  <!-- ✅ Screen Result -->
   <section id="screenResult" class="hidden flex-1">
     <div class="px-6 pt-8 pb-4">
       <h3 class="text-[#111118] text-2xl font-black text-center">Result Card</h3>
@@ -363,6 +361,7 @@
         </div>
       </div>
 
+      <!-- Question Status -->
       <div class="rounded-2xl border border-[#dbdbe6] bg-white p-4 shadow-card">
         <div class="font-black text-[#111118] mb-3">Question-wise Status</div>
         <div class="overflow-x-auto">
@@ -394,37 +393,21 @@
   </section>
 </div>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-  import {
-    getFirestore, doc, getDoc, setDoc,
-    collection, getDocs, query, where
-  } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+<script>
+  // ✅ Worker API
+  const WORKER_API = "https://spring-cloud-aa4f.aadityaraj7852.workers.dev";
 
   const WA_NUMBER = "917852097223";
-  const WA_MSG_HELP = "Sir, I am facing issues in chinking omr.";
-  const WA_MSG_ADMIN = "Sir, someone use my roll no and check my omr so I can't check now.";
+  const WA_MSG_HELP = "Sir, I am facing issues in checking omr.";
+  const WA_MSG_ADMIN = "Sir, someone used my details and I can't check now.";
 
+  // ✅ PDF Branding
   const PDF_BRAND_NAME = "Mockrise";
   const PDF_BRAND_EMAIL = "Email-aadityaraj7852@gmail.com";
   const PDF_BRAND_MOBILE = "Mobile-7852097223";
+
+  // ✅ Logo direct
   const BRAND_LOGO_URL = "./logo.png";
-
-  const BLOGGER_ID = "1505425628593992085";
-  const BLOGGER_KEY = "AIzaSyBaGppSDvKYBc_UGMDQ2JGmKi0V2FQa2ec";
-  const RESULT_LABEL = "Result Name";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyC0QINninWOOCWh9Q1gomxHC0Y1_hrzjOU",
-    authDomain: "test-series-app-8295f.firebaseapp.com",
-    projectId: "test-series-app-8295f",
-    storageBucket: "test-series-app-8295f.firebasestorage.app",
-    messagingSenderId: "576199084436",
-    appId: "1:576199084436:web:875173574f2a0675a6a781"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
 
   const $ = (id)=>document.getElementById(id);
 
@@ -432,8 +415,7 @@
   let examConfig = null;
   let selectedExamTitle = "";
 
-  // ✅ Guest User State (No Login)
-  let userState = { uid:"", name:"", mobile:"", email:"" };
+  let userState = { name:"", mobile:"", email:"" };
 
   let state = {
     roll:"",
@@ -472,6 +454,7 @@
     $(screen).classList.remove("hidden");
   }
 
+  // ✅ back icon go:back
   $("backBtn").addEventListener("click", ()=>{
     try{ window.location.href="go:back"; }
     catch(e){ history.back(); }
@@ -481,6 +464,19 @@
   $("contactAdmin").onclick = ()=> window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(WA_MSG_ADMIN)}`,"_blank");
   $("popupOk").onclick = ()=> $("rollPopup").classList.remove("show");
 
+  async function apiGET(path){
+    const res = await fetch(WORKER_API + path);
+    return await res.json();
+  }
+  async function apiPOST(path, payload){
+    const res = await fetch(WORKER_API + path, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(payload)
+    });
+    return await res.json();
+  }
+
   function parseExamJSON(html){
     const match = (html||"").match(/\{[\s\S]*\}/);
     if(!match) return null;
@@ -488,17 +484,16 @@
   }
 
   async function fetchExams(){
-    const url =
-      `https://www.googleapis.com/blogger/v3/blogs/${BLOGGER_ID}/posts`+
-      `?key=${BLOGGER_KEY}`+
-      `&labels=${encodeURIComponent(RESULT_LABEL)}`+
-      `&maxResults=15`+
-      `&fields=items(title,content)`;
+    $("examSelect").innerHTML = `<option value="">Loading...</option>`;
+    const data = await apiGET("/exams");
 
-    const res = await fetch(url);
-    const data = await res.json();
+    if(!data.ok){
+      alert("Exams load failed ❌");
+      $("examSelect").innerHTML = `<option value="">Failed</option>`;
+      return;
+    }
+
     examPosts = data.items || [];
-
     $("examSelect").innerHTML = `<option value="">Select exam</option>`;
     examPosts.forEach((p,i)=>{
       const opt=document.createElement("option");
@@ -555,6 +550,7 @@
       $("paperSelect").appendChild(opt);
     });
 
+    // ✅ add Don't know option
     const dk=document.createElement("option");
     dk.value="__DONT_KNOW__";
     dk.textContent="Don't know (Auto Detect)";
@@ -587,6 +583,7 @@
     return getAnswerKeyForPaper(state.shift, state.paperCode);
   }
 
+  // ✅ AUTO PAPER DETECT using max matches
   function autoDetectPaperCode(userAns){
     const shiftObj = examConfig?.answerKey?.[state.shift] || {};
     const paperCodes = Object.keys(shiftObj);
@@ -679,130 +676,11 @@
     state.marks=Math.max(0, Number((state.posMarks-state.negMarks).toFixed(2)));
   }
 
-  function attemptDocId(){
-    return `${examConfig.examName}_${state.shift}_${state.paperCode}_${state.roll}`;
-  }
-
-  // ✅ Guest Unique Lock: same user data only once
-  function guestUseDocId(){
-    // user can only submit ONCE using same mobile+email for same exam
-    return `${examConfig.examName}_${userState.mobile}`;
-  }
-
-  function isValidEmail(email){
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email||"").trim());
-  }
-
-  function isValidMobile(m){
-    return /^\d{10}$/.test(String(m||"").trim());
-  }
-
-  async function ensureGuestOnceOnly(){
-    const ref = doc(db,"guest_once_only", guestUseDocId());
-    const snap = await getDoc(ref);
-    if(snap.exists()){
-      return false; // already used
-    }
-    return true;
-  }
-
-  async function markGuestUsed(){
-    await setDoc(doc(db,"guest_once_only", guestUseDocId()),{
-      examName: examConfig.examName,
-      mobile: userState.mobile,
-      email: userState.email,
-      name: userState.name,
-      usedAt: new Date().toISOString()
-    },{merge:false});
-  }
-
-  async function saveGuestProfile(){
-    // store user profile by mobile
-    await setDoc(doc(db,"guest_profiles", userState.mobile),{
-      name:userState.name,
-      mobile:userState.mobile,
-      email:userState.email,
-      updatedAt:new Date().toISOString()
-    },{merge:true});
-  }
-
-  async function saveAttempt(){
-    await setDoc(doc(db,"attempts",attemptDocId()),{
-      uid:userState.uid,
-      ownerName:userState.name,
-
-      name:userState.name,
-      mobile:userState.mobile,
-      email:userState.email,
-
-      roll:String(state.roll),
-      category:String(state.category||"OTHER"),
-
-      examName:examConfig.examName,
-      shift:state.shift,
-      paperCode:state.paperCode,
-
-      totalMarks:Number(examConfig.totalMarks||0),
-      pm:Number(examConfig.pm||1),
-      nm:Number(examConfig.nm||0),
-
-      correct:state.correct,
-      wrong:state.wrong,
-      attempted:state.attempted,
-      notAttempted:state.notAttempted,
-      posMarks:state.posMarks,
-      negMarks:state.negMarks,
-      marks:state.marks,
-
-      answers:state.answers,
-      createdAt:new Date().toISOString()
-    },{merge:false});
-  }
-
   async function fetchAttemptsByPaper(){
-    const qy=query(collection(db,"attempts"),
-      where("examName","==",examConfig.examName),
-      where("shift","==",state.shift),
-      where("paperCode","==",state.paperCode)
-    );
-    const snap=await getDocs(qy);
-    const arr=[];
-    snap.forEach(d=>arr.push(d.data()));
-    return arr;
-  }
-
-  async function fetchAttemptsByShift(){
-    const qy=query(collection(db,"attempts"),
-      where("examName","==",examConfig.examName),
-      where("shift","==",state.shift)
-    );
-    const snap=await getDocs(qy);
-    const arr=[];
-    snap.forEach(d=>arr.push(d.data()));
-    return arr;
-  }
-
-  async function fetchAttemptsOverall(){
-    const qy=query(collection(db,"attempts"),
-      where("examName","==",examConfig.examName)
-    );
-    const snap=await getDocs(qy);
-    const arr=[];
-    snap.forEach(d=>arr.push(d.data()));
-    return arr;
-  }
-
-  async function fetchAttemptsByCategory(){
-    const qy=query(collection(db,"attempts"),
-      where("examName","==",examConfig.examName),
-      where("shift","==",state.shift),
-      where("paperCode","==",state.paperCode),
-      where("category","==",String(state.category||"OTHER"))
-    );
-    const snap=await getDocs(qy);
-    const arr=[];
-    snap.forEach(d=>arr.push(d.data()));
-    return arr;
+    // ⚠️ Ranks अभी भी frontend के पुराने logic पर थे (Firestore से)
+    // अब data Worker में जा रहा है, इसलिए rank compute public करना है तो अलग API बनानी पड़ेगी
+    // अभी के लिए simple mode: rank = "-"
+    return [];
   }
 
   function formatRank(rank,total){
@@ -811,78 +689,39 @@
   }
 
   async function computeRanksAndStats(){
-    const paperArr=await fetchAttemptsByPaper();
-    const shiftArr=await fetchAttemptsByShift();
-    const overallArr=await fetchAttemptsOverall();
-    const catArr = await fetchAttemptsByCategory();
-    const totalMarks=Number(examConfig.totalMarks||0);
+    // ✅ Simple placeholder (ranks off)
+    state.overallRank="-";
+    state.shiftRank="-";
+    state.catRank="-";
+    state.overallTotal=0;
+    state.shiftTotal=0;
+    state.catTotal=0;
 
-    const shiftSorted=[...shiftArr].sort((a,b)=>Number(b.marks||0)-Number(a.marks||0));
-    const overallSorted=[...overallArr].sort((a,b)=>Number(b.marks||0)-Number(a.marks||0));
-    const catSorted=[...catArr].sort((a,b)=>Number(b.marks||0)-Number(a.marks||0));
+    state.avgMarks = state.marks;
+    state.above80 = 0;
 
-    const rankOverall = overallSorted.findIndex(x=>String(x.roll)===String(state.roll)) + 1;
-    const rankShift = shiftSorted.findIndex(x=>String(x.roll)===String(state.roll)) + 1;
-    const rankCat = catSorted.findIndex(x=>String(x.roll)===String(state.roll)) + 1;
-
-    state.overallTotal = overallSorted.length || 1;
-    state.shiftTotal = shiftSorted.length || 1;
-    state.catTotal = catSorted.length || 1;
-
-    state.overallRank = rankOverall > 0 ? rankOverall : "-";
-    state.shiftRank = rankShift > 0 ? rankShift : "-";
-    state.catRank = rankCat > 0 ? rankCat : "-";
-
-    let sum=0;
-    paperArr.forEach(x=>sum += Number(x.marks||0));
-    state.avgMarks = paperArr.length ? Number((sum/paperArr.length).toFixed(2)) : state.marks;
-
-    let above80=0;
-    paperArr.forEach(x=>{
-      const m=Number(x.marks||0);
-      const pct= totalMarks ? (m/totalMarks)*100 : 0;
-      if(pct >= 80) above80++;
-    });
-    state.above80 = above80;
-
+    // difficulty default based on question count
     const key=getAnswerKey();
     const nums=Object.keys(key).map(x=>Number(x)).filter(n=>!isNaN(n));
     const maxQ=nums.length? Math.max(...nums) : getTotalQFromAnswerKey(examConfig);
 
-    const correctCount={}, attemptCount={};
-    for(let q=1;q<=maxQ;q++){ correctCount[q]=0; attemptCount[q]=0; }
-
-    paperArr.forEach(at=>{
-      const ansObj=at.answers||{};
-      for(let q=1;q<=maxQ;q++){
-        const a=ansObj[q]||ansObj[String(q)]||"";
-        if(a){
-          attemptCount[q]++;
-          if(String(a).toUpperCase()===String(key[q]||"").toUpperCase()) correctCount[q]++;
-        }
-      }
-    });
-
-    const ratios=[];
-    for(let q=1;q<=maxQ;q++){
-      const r=attemptCount[q]? (correctCount[q]/attemptCount[q]) : 0;
-      ratios.push({q,r});
-    }
-    ratios.sort((a,b)=>b.r-a.r);
-
     const easyCount=Math.max(1,Math.floor(maxQ*0.33));
     const hardCount=Math.max(1,Math.floor(maxQ*0.33));
-    const easySet=new Set(ratios.slice(0,easyCount).map(x=>x.q));
-    const hardSet=new Set(ratios.slice(ratios.length-hardCount).map(x=>x.q));
-
-    let easy=0,moderate=0,hard=0;
     const diffMap={};
+
     for(let q=1;q<=maxQ;q++){
-      if(easySet.has(q)){ diffMap[q]="Easy"; easy++; }
-      else if(hardSet.has(q)){ diffMap[q]="Hard"; hard++; }
-      else { diffMap[q]="Moderate"; moderate++; }
+      if(q<=easyCount) diffMap[q]="Easy";
+      else if(q>maxQ-hardCount) diffMap[q]="Hard";
+      else diffMap[q]="Moderate";
     }
     state.difficultyMap=diffMap;
+
+    let easy=0,moderate=0,hard=0;
+    Object.values(diffMap).forEach(x=>{
+      if(x==="Easy") easy++;
+      else if(x==="Hard") hard++;
+      else moderate++;
+    });
     state.diffCount={easy,moderate,hard};
   }
 
@@ -948,9 +787,9 @@
     $("rCat").textContent=state.category||"-";
 
     $("rMarks").textContent=`${state.marks} / ${examConfig.totalMarks}`;
-    $("rRankOverall").textContent = formatRank(state.overallRank, state.overallTotal);
-    $("rRankShift").textContent = formatRank(state.shiftRank, state.shiftTotal);
-    $("rRankCat").textContent = formatRank(state.catRank, state.catTotal);
+    $("rRankOverall").textContent = "-";
+    $("rRankShift").textContent = "-";
+    $("rRankCat").textContent = "-";
 
     $("rAbove80").textContent = state.above80;
 
@@ -975,6 +814,7 @@
   async function downloadInvoicePDF(){
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF("p","mm","a4");
+
     const PAGE_W = 210;
     const margin = 10;
 
@@ -1002,6 +842,7 @@
     pdf.setFont(undefined,"bold");
     pdf.text(PDF_BRAND_NAME, margin+4, y+10);
     pdf.setFontSize(10);
+    pdf.setFont(undefined,"normal");
     pdf.text(PDF_BRAND_EMAIL, margin+4, y+17);
     pdf.text(PDF_BRAND_MOBILE, margin+4, y+23);
 
@@ -1021,6 +862,109 @@
     pdf.text(`Roll No: ${state.roll}`, margin+4, y+34);
     pdf.text(`Category: ${state.category}`, margin+4, y+40);
 
+    const rightX = margin + (PAGE_W - margin*2)/2 + 4;
+    pdf.setFont(undefined,"bold");
+    pdf.text("Exam Details", rightX, y+8);
+    pdf.setFont(undefined,"normal");
+    pdf.text(`Exam: ${examConfig.examName}`, rightX, y+16);
+    pdf.text(`Shift: ${state.shift}`, rightX, y+22);
+    pdf.text(`Paper: ${state.paperCode}`, rightX, y+28);
+    pdf.text(`Date: ${new Date().toLocaleDateString("en-GB")}`, rightX, y+34);
+
+    y += 52;
+    pdf.setDrawColor(130);
+    pdf.rect(margin, y, PAGE_W - margin*2, 42);
+
+    pdf.setFont(undefined,"bold");
+    pdf.text("OMR Summary", margin+4, y+8);
+    pdf.setFont(undefined,"normal");
+
+    const totalQ = state.correct + state.wrong + state.notAttempted;
+    pdf.text(`Total Questions: ${totalQ}`, margin+4, y+18);
+    pdf.text(`Right: ${state.correct}`, margin+4, y+26);
+    pdf.text(`Wrong: ${state.wrong}`, margin+4, y+34);
+
+    pdf.text(`Skipped: ${state.notAttempted}`, rightX, y+18);
+    pdf.text(`Marks: ${state.marks}/${examConfig.totalMarks}`, rightX, y+26);
+
+    y += 52;
+    pdf.setFont(undefined,"bold");
+    pdf.setFontSize(11);
+    pdf.text("Question-wise Status", margin+2, y);
+
+    y += 4;
+    const tableX = margin;
+    const tableW = PAGE_W - margin*2;
+
+    const col = {
+      q: tableX + 2,
+      your: tableX + 22,
+      ans: tableX + 52,
+      status: tableX + 82,
+      diff: tableX + 132
+    };
+
+    pdf.setFillColor(245,245,245);
+    pdf.rect(tableX, y+2, tableW, 8, "F");
+    pdf.setDrawColor(200);
+    pdf.rect(tableX, y+2, tableW, 8);
+
+    pdf.setFontSize(9);
+    pdf.setFont(undefined,"bold");
+    pdf.text("Q", col.q, y+8);
+    pdf.text("Your", col.your, y+8);
+    pdf.text("Answer", col.ans, y+8);
+    pdf.text("Status", col.status, y+8);
+    pdf.text("Difficulty", col.diff, y+8);
+
+    pdf.setFont(undefined,"normal");
+
+    const key=getAnswerKey();
+    const nums=Object.keys(key).map(x=>Number(x)).filter(n=>!isNaN(n));
+    const maxQ=nums.length? Math.max(...nums) : getTotalQFromAnswerKey(examConfig);
+
+    let rowY = y + 14;
+
+    for(let qNo=1;qNo<=maxQ;qNo++){
+      if(rowY > 270){
+        pdf.addPage();
+        rowY = 14;
+      }
+
+      const your = state.answers[qNo] || "-";
+      const ans = String(key[qNo] || "-");
+
+      let status="Not Attempted";
+      if(your !== "-" && your !== ""){
+        status = (String(your).toUpperCase()===String(ans).toUpperCase()) ? "Correct" : "Wrong";
+      }
+
+      const diff = state.difficultyMap[qNo] || "Moderate";
+
+      pdf.setDrawColor(230);
+      pdf.rect(tableX, rowY-6, tableW, 8);
+
+      pdf.setTextColor(17,17,24);
+      pdf.text(`Q${qNo}`, col.q, rowY);
+      pdf.text(String(your), col.your, rowY);
+      pdf.text(String(ans), col.ans, rowY);
+
+      if(status==="Correct") pdf.setTextColor(4,120,87);
+      else if(status==="Wrong") pdf.setTextColor(185,28,28);
+      else pdf.setTextColor(55,65,81);
+      pdf.text(status, col.status, rowY);
+
+      let diffColor=[180,83,9];
+      if(diff==="Easy") diffColor=[4,120,87];
+      if(diff==="Hard") diffColor=[185,28,28];
+
+      pdf.setTextColor(diffColor[0],diffColor[1],diffColor[2]);
+      pdf.text(diff, col.diff, rowY);
+
+      pdf.setTextColor(0,0,0);
+      rowY += 9;
+    }
+
     pdf.save(`Mockrise_Result_${state.roll}.pdf`);
   }
 
@@ -1030,23 +974,28 @@
     return new RegExp(`^\\d{${digits}}$`).test(String(roll));
   }
 
-  // ✅ Continue
+  function isValidMobile(m){
+    return /^\d{10}$/.test(String(m||"").trim());
+  }
+  function isValidEmail(e){
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e||"").trim());
+  }
+
   $("continueBtn").addEventListener("click", async ()=>{
     if(!examConfig){ alert("Exam select करो"); return; }
 
-    // ✅ User details
-    const n = $("name").value.trim();
-    const m = $("mobile").value.trim();
-    const e = $("email").value.trim();
+    // ✅ candidate details first
+    const name = $("name").value.trim();
+    const mobile = $("mobile").value.trim();
+    const email = $("email").value.trim();
 
-    if(!n){ alert("Name required"); return; }
-    if(!isValidMobile(m)){ alert("Mobile must be 10 digits ✅"); return; }
-    if(!isValidEmail(e)){ alert("Valid email required ✅"); return; }
+    if(!name){ alert("Name जरूरी है"); return; }
+    if(!isValidMobile(mobile)){ alert("Mobile 10 digit होना चाहिए"); return; }
+    if(!isValidEmail(email)){ alert("Email सही डालो"); return; }
 
-    userState.name = n;
-    userState.mobile = m;
-    userState.email = e;
-    userState.uid = "guest_" + m;
+    userState.name = name;
+    userState.mobile = mobile;
+    userState.email = email;
 
     const shift=$("shiftSelect").value;
     let paper=$("paperSelect").value;
@@ -1062,16 +1011,6 @@
       return;
     }
 
-    // ✅ same mobile/email only once lock
-    const canUse = await ensureGuestOnceOnly();
-    if(!canUse){
-      alert("यह mobile/email पहले ही use हो चुका है ✅ अब दुबारा submit नहीं कर सकते!");
-      return;
-    }
-
-    // ✅ save guest profile
-    await saveGuestProfile();
-
     state.shift=shift;
     state.paperCode=paper;
     state.roll=roll;
@@ -1083,25 +1022,9 @@
     $("fRoll").textContent=roll;
     $("fCat").textContent=cat;
 
-    if(paper !== "__DONT_KNOW__"){
-      const docId = `${examConfig.examName}_${shift}_${paper}_${roll}`;
-      const existing = await getDoc(doc(db,"attempts", docId));
-
-      if(existing.exists()){
-        const d=existing.data();
-        if(d.uid && d.uid !== userState.uid){
-          $("rollPopupMsg").innerHTML = `
-            This roll no already checked ✅<br>
-            <b>Checked by:</b> ${d.ownerName || d.name || "User"}
-          `;
-          $("rollPopup").classList.add("show");
-          return;
-        }
-      }
-    }
-
     state.answers={};
 
+    // temp key for UI if don't know
     if(paper==="__DONT_KNOW__"){
       const found=(examConfig.shifts||[]).find(s=>s.name===shift);
       const firstPaper=found?.paperCodes?.[0];
@@ -1115,7 +1038,6 @@
     showScreen("screenFill");
   });
 
-  // ✅ Submit
   $("submitBtn").addEventListener("click", async ()=>{
     const attemptedCount = Object.values(state.answers || {}).filter(Boolean).length;
     if(attemptedCount < 1){
@@ -1123,6 +1045,7 @@
       return;
     }
 
+    // ✅ Auto detect paper if needed
     if(state.paperCode==="__DONT_KNOW__"){
       const detected = autoDetectPaperCode(state.answers);
       if(!detected){
@@ -1142,25 +1065,32 @@
 
     calcMarks();
 
-    const docId = attemptDocId();
-    const existing = await getDoc(doc(db,"attempts", docId));
-    if(existing.exists()){
-      const d=existing.data();
-      if(d.uid && d.uid !== userState.uid){
-        $("rollPopupMsg").innerHTML = `
-          This roll no already checked ✅<br>
-          <b>Checked by:</b> ${d.ownerName || d.name || "User"}
-        `;
-        $("rollPopup").classList.add("show");
-        return;
-      }
+    // ✅ Save via Worker
+    const out = await apiPOST("/submit", {
+      name: userState.name,
+      mobile: userState.mobile,
+      email: userState.email,
+
+      examName: examConfig.examName,
+      shift: state.shift,
+      paperCode: state.paperCode,
+      roll: state.roll,
+      category: state.category,
+
+      answers: state.answers,
+
+      marks: state.marks,
+      correct: state.correct,
+      wrong: state.wrong,
+      attempted: state.attempted,
+      notAttempted: state.notAttempted
+    });
+
+    if(!out.ok){
+      $("rollPopupMsg").innerHTML = out.msg || "Already submitted / Error ❌";
+      $("rollPopup").classList.add("show");
+      return;
     }
-
-    // ✅ Save attempt
-    await saveAttempt();
-
-    // ✅ Mark this guest mobile used (अब दुबारा use नहीं होगा)
-    await markGuestUsed();
 
     await computeRanksAndStats();
     renderSummary();
@@ -1172,9 +1102,11 @@
   $("pdfBtn").addEventListener("click", downloadInvoicePDF);
   $("newBtn").addEventListener("click", ()=>location.reload());
 
-  // ✅ Start app WITHOUT login
-  await fetchExams();
-  showScreen("screenSearch");
+  // ✅ Init
+  (async ()=>{
+    await fetchExams();
+    showScreen("screenSearch");
+  })();
 </script>
 
 </body>
