@@ -31,17 +31,6 @@
       cursor:pointer; user-select:none;
     }
     .btnPrimary:active{transform:scale(.98);}
-    .btnGhost{
-      width:100%;
-      background:#fff;color:#0a0ac2;
-      font-weight:900;padding:15px;border-radius:20px;
-      border:1.5px solid #dbdbe6;
-      transition:.2s;
-      display:flex;align-items:center;justify-content:center;gap:10px;
-      cursor:pointer; user-select:none;
-    }
-    .btnGhost:active{transform:scale(.98);}
-
     .chip{
       display:inline-flex;align-items:center;gap:8px;
       padding:10px 12px;border-radius:999px;
@@ -85,47 +74,6 @@
   </div>
 
   <div class="px-6 pb-10 space-y-6">
-
-    <!-- ✅ User Details (NO LOGIN, NO PHOTO) -->
-    <div class="rounded-2xl border border-[#dbdbe6] bg-white p-4 shadow-card">
-      <div class="text-[#0a0ac2] text-xs font-black uppercase tracking-widest mb-3">User Details</div>
-
-      <label class="text-xs font-black text-gray-500 uppercase tracking-widest">Full Name</label>
-      <input id="uName" class="field mt-2" placeholder="Enter your name"/>
-
-      <div class="mt-4">
-        <label class="text-xs font-black text-gray-500 uppercase tracking-widest">Mobile Number</label>
-        <input id="uMobile" class="field mt-2" placeholder="10 digit mobile" inputmode="numeric" maxlength="10"/>
-      </div>
-
-      <div class="mt-4">
-        <label class="text-xs font-black text-gray-500 uppercase tracking-widest">Email (optional)</label>
-        <input id="uEmail" class="field mt-2" placeholder="example@gmail.com" inputmode="email"/>
-      </div>
-
-      <div class="mt-4 flex flex-col gap-3">
-        <button id="saveUserBtn" class="btnPrimary">
-          <span class="material-symbols-outlined">save</span>
-          Save Details
-        </button>
-
-        <button id="clearUserBtn" class="btnGhost">
-          <span class="material-symbols-outlined">delete</span>
-          Clear
-        </button>
-      </div>
-
-      <div class="mt-4 line"></div>
-
-      <div class="mt-4 flex items-center justify-between flex-wrap gap-3">
-        <div class="smallNote">
-          Saved Status: <span id="userSaveStatus" style="color:#111118;font-weight:900;">Not saved</span>
-        </div>
-        <div class="smallNote">
-          Device ID: <span id="deviceIdTxt" style="color:#6b7280;font-weight:900;">-</span>
-        </div>
-      </div>
-    </div>
 
     <!-- Select Exam -->
     <div class="rounded-2xl border border-[#dbdbe6] bg-white p-4 shadow-card">
@@ -222,7 +170,7 @@
       </div>
     </div>
 
-    <!-- Telegram CTA -->
+    <!-- ✅ Telegram CTA वापस -->
     <div class="rounded-2xl border border-[#0088cc]/20 bg-[#0088cc]/10 p-5">
       <div class="flex items-start gap-3">
         <div class="size-11 rounded-2xl bg-[#0088cc] flex items-center justify-center text-white shadow-lg">
@@ -254,11 +202,19 @@
   const BLOGGER_ID = "1505425628593992085";
   const BLOGGER_KEY = "AIzaSyBaGppSDvKYBc_UGMDQ2JGmKi0V2FQa2ec";
   const LABEL = "Result Name";
-
-  // ✅ Firebase (NO AUTH USED - so no login popup)
+  
+  // ✅ Firebase
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-  import { getFirestore, collection, getDocs, query, where, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-
+  import {
+    getFirestore,
+    collection,
+    getDocs,
+    query,
+    where,
+    addDoc,
+    serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+  
   const firebaseConfig = {
     apiKey: "AIzaSyC0QINninWOOCWh9Q1gomxHC0Y1_hrzjOU",
     authDomain: "test-series-app-8295f.firebaseapp.com",
@@ -267,262 +223,219 @@
     messagingSenderId: "576199084436",
     appId: "1:576199084436:web:875173574f2a0675a6a781"
   };
-
+  
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
-
-  const $ = (id)=>document.getElementById(id);
-
+  
+  const $ = (id) => document.getElementById(id);
+  
   let posts = [];
   let examConfig = null;
   let selectedExamTitle = "";
-
-  function goBack(){
-    try{ window.location.href="go:back"; }
-    catch(e){ history.back(); }
+  
+  function goBack() {
+    try { window.location.href = "go:back"; }
+    catch (e) { history.back(); }
   }
   window.goBack = goBack;
-
-  function setStatus(text, color="green"){
+  
+  function setStatus(text, color = "green") {
     $("statusTxt").textContent = text;
     $("statusTxt").style.color =
-      color==="green" ? "#16a34a" :
-      color==="red" ? "#dc2626" :
-      "#f59e0b";
+      color === "green" ? "#16a34a" :
+      color === "red" ? "#dc2626" : "#f59e0b";
   }
-
-  function setLastUpdated(){
+  
+  function setLastUpdated() {
     const d = new Date();
     const date = d.toLocaleDateString("en-GB");
-    const time = d.toLocaleTimeString("en-IN", { hour:"2-digit", minute:"2-digit" });
+    const time = d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
     $("lastUpdated").textContent = `${date} • ${time}`;
   }
-
-  function parseJSONFromHTML(html){
-    const match = (html||"").match(/\{[\s\S]*\}/);
-    if(!match) return null;
-    try{ return JSON.parse(match[0]); } catch(e){ return null; }
+  
+  function parseJSONFromHTML(html) {
+    const match = (html || "").match(/\{[\s\S]*\}/);
+    if (!match) return null;
+    try { return JSON.parse(match[0]); } catch (e) { return null; }
   }
-
-  // ✅ Simple device id (NO PHOTO, NO LOGIN)
-  function getDeviceId(){
-    let id = localStorage.getItem("mockrise_device_id");
-    if(!id){
-      id = "dev_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
-      localStorage.setItem("mockrise_device_id", id);
-    }
-    return id;
-  }
-
-  const DEVICE_ID = getDeviceId();
-  $("deviceIdTxt").textContent = DEVICE_ID;
-
-  // ✅ Load saved user fields
-  function loadUserLocal(){
-    const name = localStorage.getItem("mr_name") || "";
-    const mobile = localStorage.getItem("mr_mobile") || "";
-    const email = localStorage.getItem("mr_email") || "";
-    $("uName").value = name;
-    $("uMobile").value = mobile;
-    $("uEmail").value = email;
-  }
-
-  function setUserSaveStatus(txt, color="#111118"){
-    $("userSaveStatus").textContent = txt;
-    $("userSaveStatus").style.color = color;
-    $("userSaveStatus").style.fontWeight = "900";
-  }
-
-  function isValidMobile(m){
-    return /^[6-9]\d{9}$/.test(String(m||"").trim());
-  }
-
-  // ✅ Save User Details to Firestore (NO AUTH REQUIRED)
-  $("saveUserBtn").addEventListener("click", async ()=>{
-    const name = String($("uName").value||"").trim();
-    const mobile = String($("uMobile").value||"").trim();
-    const email = String($("uEmail").value||"").trim();
-
-    if(name.length < 2){
-      alert("नाम सही भर ✅");
-      return;
-    }
-    if(!isValidMobile(mobile)){
-      alert("Mobile number सही डाल (10 digit) ✅");
-      return;
-    }
-
-    try{
-      setUserSaveStatus("Saving...", "#f59e0b");
-
-      // local save
-      localStorage.setItem("mr_name", name);
-      localStorage.setItem("mr_mobile", mobile);
-      localStorage.setItem("mr_email", email);
-
-      // Firestore save (collection: users_public)
-      // ✅ No photo fields added at all
-      const ref = doc(db, "users_public", DEVICE_ID);
-
-      await setDoc(ref, {
-        name,
-        mobile,
-        email,
-        deviceId: DEVICE_ID,
-        updatedAt: Date.now()
-      }, { merge: true });
-
-      setUserSaveStatus("Saved ✅", "#16a34a");
-    }catch(e){
-      console.log(e);
-      setUserSaveStatus("Failed ❌", "#dc2626");
-      alert("Firestore save error ❌ (rules check कर)");
-    }
-  });
-
-  $("clearUserBtn").addEventListener("click", ()=>{
-    $("uName").value = "";
-    $("uMobile").value = "";
-    $("uEmail").value = "";
-    localStorage.removeItem("mr_name");
-    localStorage.removeItem("mr_mobile");
-    localStorage.removeItem("mr_email");
-    setUserSaveStatus("Cleared", "#111118");
-  });
-
-  async function loadExams(){
-    try{
+  
+  async function loadExams() {
+    try {
       setStatus("Loading...", "orange");
       const url =
-        `https://www.googleapis.com/blogger/v3/blogs/${BLOGGER_ID}/posts`+
-        `?key=${BLOGGER_KEY}`+
-        `&labels=${encodeURIComponent(LABEL)}`+
-        `&maxResults=15`+
+        `https://www.googleapis.com/blogger/v3/blogs/${BLOGGER_ID}/posts` +
+        `?key=${BLOGGER_KEY}` +
+        `&labels=${encodeURIComponent(LABEL)}` +
+        `&maxResults=15` +
         `&fields=items(title,content)`;
-
+      
       const res = await fetch(url);
       const data = await res.json();
       posts = data.items || [];
-
+      
       $("examSelect").innerHTML = `<option value="">Select exam</option>`;
-      posts.forEach((p,i)=>{
+      posts.forEach((p, i) => {
         const opt = document.createElement("option");
         opt.value = i;
         opt.textContent = p.title;
         $("examSelect").appendChild(opt);
       });
-
+      
       setStatus("Ready", "green");
       setLastUpdated();
-    }catch(e){
+    } catch (e) {
       setStatus("Failed", "red");
       $("examSelect").innerHTML = `<option value="">Failed to load</option>`;
     }
   }
-
-  function renderMeta(cfg, title){
+  
+  function renderMeta(cfg, title) {
     $("examTitleMini").textContent = title || cfg.examName || "-";
     $("formsTxt").textContent = `Forms: ${(cfg.totalForms||"-").toLocaleString ? Number(cfg.totalForms).toLocaleString("en-IN") : (cfg.totalForms||"-")}`;
     $("vacancyTxt").textContent = `Vacancy: ${cfg.vacancy ?? "-"}`;
     $("marksTxt").textContent = `Total Marks: ${cfg.totalMarks ?? "-"}`;
     $("ruleTxt").textContent = `+${cfg.pm ?? "-"} / -${cfg.nm ?? "-"}`;
   }
-
-  $("examSelect").addEventListener("change", ()=>{
+  
+  $("examSelect").addEventListener("change", () => {
     const idx = $("examSelect").value;
-    if(idx===""){
-      examConfig=null;
+    if (idx === "") {
+      examConfig = null;
       return;
     }
     const post = posts[Number(idx)];
     selectedExamTitle = post.title || "";
     const json = parseJSONFromHTML(post.content || "");
-    if(!json){
+    if (!json) {
       alert("JSON invalid ❌");
       return;
     }
-    examConfig=json;
+    examConfig = json;
     renderMeta(examConfig, selectedExamTitle);
     setLastUpdated();
   });
-
-  function percentileCutoff(marksArr, topPercent){
-    if(!marksArr.length) return null;
-    const sorted = [...marksArr].sort((a,b)=>b-a);
-    const idx = Math.max(0, Math.floor((topPercent/100) * sorted.length) - 1);
-    return sorted[idx] ?? sorted[sorted.length-1];
+  
+  function percentileCutoff(marksArr, topPercent) {
+    if (!marksArr.length) return null;
+    const sorted = [...marksArr].sort((a, b) => b - a);
+    const idx = Math.max(0, Math.floor((topPercent / 100) * sorted.length) - 1);
+    return sorted[idx] ?? sorted[sorted.length - 1];
   }
-
-  async function fetchAllAttemptsForExam(examName){
+  
+  async function fetchAllAttemptsForExam(examName) {
     const qy = query(
-      collection(db,"attempts"),
-      where("examName","==", examName)
+      collection(db, "attempts"),
+      where("examName", "==", examName)
     );
     const snap = await getDocs(qy);
-    const list=[];
-    snap.forEach(d=>list.push(d.data()));
+    const list = [];
+    snap.forEach(d => list.push(d.data()));
     return list;
   }
-
-  function getCutoffForCategory(allAttempts, cat){
-    const catList = allAttempts.filter(x => String(x.category||"OTHER") === cat);
-    const marksArr = catList.map(x=>Number(x.marks||0)).filter(n=>!isNaN(n));
+  
+  function getCutoffForCategory(allAttempts, cat) {
+    const catList = allAttempts.filter(x => String(x.category || "OTHER") === cat);
+    const marksArr = catList.map(x => Number(x.marks || 0)).filter(n => !isNaN(n));
     return percentileCutoff(marksArr, 10);
   }
-
-  function setBox(id, val, totalMarks){
-    if(val===null || val===undefined){
-      $(id).textContent="--";
+  
+  function setBox(id, val, totalMarks) {
+    if (val === null || val === undefined) {
+      $(id).textContent = "--";
       return;
     }
-    const low = Math.max(0, Math.round(val-2));
-    const high = Math.min(totalMarks, Math.round(val+2));
+    const low = Math.max(0, Math.round(val - 2));
+    const high = Math.min(totalMarks, Math.round(val + 2));
     $(id).textContent = `${low} - ${high}`;
   }
-
-  $("calcBtn").addEventListener("click", async ()=>{
-    if(!examConfig){ alert("पहले exam select कर ✅"); return; }
-
-    try{
+  
+  // ✅ NEW: User Details Save in Firebase (No Login Needed)
+  async function saveUserDetails() {
+    const name = ($("userName")?.value || "").trim();
+    const mobile = ($("userMobile")?.value || "").trim();
+    const email = ($("userEmail")?.value || "").trim().toLowerCase();
+    
+    if (!name || !mobile || !email) {
+      alert("Name, Mobile, Email सब भरना जरूरी है ✅");
+      return false;
+    }
+    
+    // simple validations
+    if (!/^[6-9]\d{9}$/.test(mobile)) {
+      alert("Mobile number सही डालो (10 digits) ❌");
+      return false;
+    }
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      alert("Email सही डालो ❌");
+      return false;
+    }
+    
+    const examName = examConfig?.examName || selectedExamTitle || "Unknown Exam";
+    
+    // ✅ Firestore Save (users collection)
+    await addDoc(collection(db, "users"), {
+      name,
+      mobile,
+      email,
+      examName,
+      createdAt: serverTimestamp(),
+      source: "cutoff_page"
+    });
+    
+    return true;
+  }
+  
+  $("calcBtn").addEventListener("click", async () => {
+    if (!examConfig) { alert("पहले exam select कर ✅"); return; }
+    
+    try {
+      setStatus("Saving User...", "orange");
+      
+      // ✅ पहले user data save होगा
+      const ok = await saveUserDetails();
+      if (!ok) {
+        setStatus("Fill Details", "red");
+        return;
+      }
+      
       setStatus("Calculating...", "orange");
-
+      
       const examName = examConfig.examName || selectedExamTitle;
-      const totalMarks = Number(examConfig.totalMarks||0);
-
+      const totalMarks = Number(examConfig.totalMarks || 0);
+      
       const attempts = await fetchAllAttemptsForExam(examName);
-
-      if(!attempts.length){
+      
+      if (!attempts.length) {
         setStatus("No data", "red");
         alert("Firestore में इस exam का data नहीं मिला ❌");
         return;
       }
-
+      
       const gen = getCutoffForCategory(attempts, "GENERAL");
       const obc = getCutoffForCategory(attempts, "OBC");
-      const sc  = getCutoffForCategory(attempts, "SC");
-      const st  = getCutoffForCategory(attempts, "ST");
+      const sc = getCutoffForCategory(attempts, "SC");
+      const st = getCutoffForCategory(attempts, "ST");
       const ews = getCutoffForCategory(attempts, "EWS");
       const oth = getCutoffForCategory(attempts, "OTHER");
-
+      
       setBox("coGEN", gen, totalMarks);
       setBox("coOBC", obc, totalMarks);
       setBox("coSC", sc, totalMarks);
       setBox("coST", st, totalMarks);
       setBox("coEWS", ews, totalMarks);
       setBox("coOTHER", oth, totalMarks);
-
+      
       setLastUpdated();
       setStatus("Updated ✅", "green");
-
-    }catch(e){
+      
+    } catch (e) {
       console.log(e);
       setStatus("Failed", "red");
-      alert("Firestore read error ❌ (rules check कर)");
+      alert("Firestore error ❌ (rules check कर)");
     }
   });
-
+  
   // Init
-  loadUserLocal();
   loadExams();
   setLastUpdated();
 </script>
