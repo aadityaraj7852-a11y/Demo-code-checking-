@@ -31,9 +31,17 @@
       cursor:pointer; user-select:none;
     }
     .btnPrimary:active{transform:scale(.98);}
-    .btnPrimary:disabled{
-      opacity:.55; cursor:not-allowed; transform:none;
+    .btnGhost{
+      width:100%;
+      background:#fff;color:#0a0ac2;
+      font-weight:900;padding:15px;border-radius:20px;
+      border:1.5px solid #dbdbe6;
+      transition:.2s;
+      display:flex;align-items:center;justify-content:center;gap:10px;
+      cursor:pointer; user-select:none;
     }
+    .btnGhost:active{transform:scale(.98);}
+
     .chip{
       display:inline-flex;align-items:center;gap:8px;
       padding:10px 12px;border-radius:999px;
@@ -53,105 +61,73 @@
     .cutTag{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:900;color:#16a34a;}
     .line{height:1px;background:linear-gradient(90deg, transparent, rgba(10,10,194,.25), transparent);}
     .smallNote{font-size:11px;color:#6b7280;font-weight:800;line-height:1.4;}
-
-    /* ✅ Profile Modal */
-    .modalOverlay{
-      position:fixed; inset:0;
-      background:rgba(17,17,24,.55);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      padding:14px;
-      z-index:999;
-    }
-    .modalBox{
-      width:min(560px,100%);
-      background:#fff;
-      border-radius:22px;
-      border:1px solid #eef0f6;
-      box-shadow:0 18px 60px rgba(0,0,0,.20);
-      overflow:hidden;
-    }
-    .modalTop{
-      padding:16px 18px;
-      border-bottom:1px solid #f0f1f6;
-      display:flex;align-items:center;justify-content:space-between;gap:10px;
-    }
-    .modalTitle{font-weight:900;color:#111118;font-size:16px;}
-    .modalBody{padding:16px 18px;}
-    .helpTxt{font-size:12px;color:#6b7280;font-weight:800;line-height:1.5;}
-    .errTxt{font-size:12px;color:#dc2626;font-weight:900;display:none;margin-top:8px;}
-    .miniBtn{
-      border:1px solid #dbdbe6;
-      background:#fff;
-      border-radius:14px;
-      padding:10px 12px;
-      font-weight:900;
-      cursor:pointer;
-      user-select:none;
-    }
-    .miniBtn:active{transform:scale(.98);}
-    .okBadge{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding:8px 10px;
-      border-radius:999px;
-      background:rgba(22,163,74,.10);
-      border:1px solid rgba(22,163,74,.18);
-      color:#16a34a;
-      font-weight:900;
-      font-size:12px;
-      white-space:nowrap;
-    }
   </style>
 </head>
 
 <body>
 <div class="max-w-[1100px] mx-auto min-h-screen bg-white shadow-xl flex flex-col overflow-hidden">
 
-  <div class="px-6 pt-7 pb-3">
-    <div class="flex items-center justify-between gap-3">
-      <button onclick="goBack()" class="text-[#0a0ac2] flex size-10 items-center justify-center cursor-pointer rounded-full hover:bg-[#0a0ac2]/10 transition">
-        <span class="material-symbols-outlined">arrow_back</span>
-      </button>
+  <!-- Header -->
+  <div class="flex items-center bg-white p-4 border-b border-gray-100 sticky top-0 z-20">
+    <button onclick="goBack()" class="text-[#0a0ac2] flex size-10 items-center justify-center cursor-pointer rounded-full hover:bg-[#0a0ac2]/10 transition">
+      <span class="material-symbols-outlined">arrow_back</span>
+    </button>
+    <h2 class="text-[#111118] text-lg font-black flex-1 text-center">Cut-off Checker</h2>
+    <div class="size-10"></div>
+  </div>
 
-      <div class="flex-1">
-        <h3 class="text-[#111118] text-xl font-black text-center">Mockrise Auto Cut-off</h3>
-        <p class="text-[#60608a] text-xs mt-1 text-center">
-          Firestore से auto calculate ✅
-        </p>
-      </div>
-
-      <button id="editProfileBtn" class="miniBtn">Edit</button>
-    </div>
-
-    <div class="mt-3 flex justify-center">
-      <span id="profileBadge" class="okBadge" style="display:none;">
-        <span class="material-symbols-outlined text-[18px]">verified</span>
-        Profile Saved
-      </span>
-    </div>
+  <!-- Title -->
+  <div class="px-6 pt-8 pb-4">
+    <h3 class="text-[#111118] text-2xl font-black text-center">Mockrise Auto Cut-off</h3>
+    <p class="text-[#60608a] text-sm mt-2 text-center">
+      Complete exam cut-off (overall) — Firestore से auto calculate ✅
+    </p>
   </div>
 
   <div class="px-6 pb-10 space-y-6">
 
+    <!-- ✅ User Details (NO LOGIN, NO PHOTO) -->
     <div class="rounded-2xl border border-[#dbdbe6] bg-white p-4 shadow-card">
-      <div class="flex items-center justify-between gap-3 flex-wrap">
-        <div>
-          <div class="text-[#0a0ac2] text-xs font-black uppercase tracking-widest mb-1">User Details (Saved)</div>
-          <div class="text-[#111118] font-black text-sm" id="userLine1">Name: -</div>
-          <div class="text-[#111118] font-black text-sm mt-1" id="userLine2">Mobile: -</div>
-          <div class="text-[#111118] font-black text-sm mt-1" id="userLine3">Email: -</div>
-          <div class="text-[#111118] font-black text-sm mt-1" id="userLine4">Roll No: -</div>
-        </div>
+      <div class="text-[#0a0ac2] text-xs font-black uppercase tracking-widest mb-3">User Details</div>
 
+      <label class="text-xs font-black text-gray-500 uppercase tracking-widest">Full Name</label>
+      <input id="uName" class="field mt-2" placeholder="Enter your name"/>
+
+      <div class="mt-4">
+        <label class="text-xs font-black text-gray-500 uppercase tracking-widest">Mobile Number</label>
+        <input id="uMobile" class="field mt-2" placeholder="10 digit mobile" inputmode="numeric" maxlength="10"/>
+      </div>
+
+      <div class="mt-4">
+        <label class="text-xs font-black text-gray-500 uppercase tracking-widest">Email (optional)</label>
+        <input id="uEmail" class="field mt-2" placeholder="example@gmail.com" inputmode="email"/>
+      </div>
+
+      <div class="mt-4 flex flex-col gap-3">
+        <button id="saveUserBtn" class="btnPrimary">
+          <span class="material-symbols-outlined">save</span>
+          Save Details
+        </button>
+
+        <button id="clearUserBtn" class="btnGhost">
+          <span class="material-symbols-outlined">delete</span>
+          Clear
+        </button>
+      </div>
+
+      <div class="mt-4 line"></div>
+
+      <div class="mt-4 flex items-center justify-between flex-wrap gap-3">
         <div class="smallNote">
-          *जब तक सही details save नहीं होंगी, Calculate button lock रहेगा ✅
+          Saved Status: <span id="userSaveStatus" style="color:#111118;font-weight:900;">Not saved</span>
+        </div>
+        <div class="smallNote">
+          Device ID: <span id="deviceIdTxt" style="color:#6b7280;font-weight:900;">-</span>
         </div>
       </div>
     </div>
 
+    <!-- Select Exam -->
     <div class="rounded-2xl border border-[#dbdbe6] bg-white p-4 shadow-card">
       <div class="text-[#0a0ac2] text-xs font-black uppercase tracking-widest mb-3">Exam Setup</div>
 
@@ -168,13 +144,10 @@
       </div>
 
       <div class="mt-4">
-        <button id="calcBtn" class="btnPrimary" disabled>
+        <button id="calcBtn" class="btnPrimary">
           <span class="material-symbols-outlined">analytics</span>
           Calculate Overall Cut-off
         </button>
-        <div class="smallNote mt-2" id="lockNote" style="color:#dc2626; font-weight:900; display:none;">
-          पहले अपना सही नाम + 10 digit mobile + email save करो ✅
-        </div>
       </div>
 
       <div class="mt-4 line"></div>
@@ -189,6 +162,7 @@
       </div>
     </div>
 
+    <!-- Warning -->
     <div class="rounded-2xl border border-yellow-200 bg-yellow-50 p-4">
       <div class="flex items-start gap-3">
         <div class="size-10 rounded-xl bg-yellow-200/70 flex items-center justify-center text-yellow-800">
@@ -203,6 +177,7 @@
       </div>
     </div>
 
+    <!-- Cutoff Boxes -->
     <div class="rounded-2xl border border-[#dbdbe6] bg-white p-4 shadow-card">
       <div class="flex items-center justify-between gap-2 mb-3">
         <h3 class="text-[#111118] font-black text-base">Category-wise Cutoff (Overall Exam)</h3>
@@ -247,6 +222,7 @@
       </div>
     </div>
 
+    <!-- Telegram CTA -->
     <div class="rounded-2xl border border-[#0088cc]/20 bg-[#0088cc]/10 p-5">
       <div class="flex items-start gap-3">
         <div class="size-11 rounded-2xl bg-[#0088cc] flex items-center justify-center text-white shadow-lg">
@@ -272,70 +248,16 @@
   </div>
 </div>
 
-<!-- ✅ Profile Modal -->
-<div id="profileModal" class="modalOverlay">
-  <div class="modalBox">
-    <div class="modalTop">
-      <div class="modalTitle">Save Your Details</div>
-      <button id="closeModalBtn" class="miniBtn">Close</button>
-    </div>
-
-    <div class="modalBody">
-      <div class="helpTxt">
-        ✅ बिना login के आपका data save रहेगा (LocalStorage + Firestore)<br/>
-        ❌ गलत नाम / गलत mobile / गलत email होगा तो आगे नहीं जाने देगा।
-      </div>
-
-      <div class="mt-4 space-y-3">
-        <div>
-          <label class="text-xs font-black text-gray-500 uppercase tracking-widest">Full Name</label>
-          <input id="uName" class="field mt-2" placeholder="Enter your name"/>
-        </div>
-
-        <div>
-          <label class="text-xs font-black text-gray-500 uppercase tracking-widest">Mobile Number</label>
-          <input id="uMobile" class="field mt-2" placeholder="10 digit mobile" inputmode="numeric"/>
-        </div>
-
-        <div>
-          <label class="text-xs font-black text-gray-500 uppercase tracking-widest">Email</label>
-          <input id="uEmail" class="field mt-2" placeholder="example@gmail.com" inputmode="email"/>
-        </div>
-
-        <div>
-          <label class="text-xs font-black text-gray-500 uppercase tracking-widest">Roll Number</label>
-          <input id="uRoll" class="field mt-2" placeholder="Enter roll number"/>
-        </div>
-
-        <div id="profileErr" class="errTxt">Please fill valid details ❌</div>
-
-        <button id="saveProfileBtn" class="btnPrimary mt-2">
-          <span class="material-symbols-outlined">save</span>
-          Save Details
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
+<!-- ✅ Firebase + Logic -->
 <script type="module">
   // ✅ Blogger
   const BLOGGER_ID = "1505425628593992085";
   const BLOGGER_KEY = "AIzaSyBaGppSDvKYBc_UGMDQ2JGmKi0V2FQa2ec";
   const LABEL = "Result Name";
 
-  // ✅ Firebase
+  // ✅ Firebase (NO AUTH USED - so no login popup)
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-  import {
-    getFirestore,
-    collection,
-    getDocs,
-    query,
-    where,
-    doc,
-    setDoc,
-    serverTimestamp
-  } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+  import { getFirestore, collection, getDocs, query, where, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyC0QINninWOOCWh9Q1gomxHC0Y1_hrzjOU",
@@ -351,8 +273,6 @@
 
   const $ = (id)=>document.getElementById(id);
 
-  const PROFILE_KEY = "mockrise_cutoff_user_profile_v1";
-
   let posts = [];
   let examConfig = null;
   let selectedExamTitle = "";
@@ -365,7 +285,10 @@
 
   function setStatus(text, color="green"){
     $("statusTxt").textContent = text;
-    $("statusTxt").style.color = color==="green" ? "#16a34a" : color==="red" ? "#dc2626" : "#f59e0b";
+    $("statusTxt").style.color =
+      color==="green" ? "#16a34a" :
+      color==="red" ? "#dc2626" :
+      "#f59e0b";
   }
 
   function setLastUpdated(){
@@ -381,175 +304,90 @@
     try{ return JSON.parse(match[0]); } catch(e){ return null; }
   }
 
-  function openProfileModal(){
-    $("profileModal").style.display = "flex";
-    $("profileErr").style.display = "none";
-  }
-  function closeProfileModal(){
-    $("profileModal").style.display = "none";
-  }
-
-  function normalizeName(name){
-    return String(name||"").trim().replace(/\s+/g," ");
-  }
-
-  function validName(name){
-    const n = normalizeName(name);
-    if(n.length < 3) return false;
-    return /^[A-Za-z\u0900-\u097F.\s]+$/.test(n);
-  }
-
-  function validMobile(m){
-    const num = String(m||"").replace(/\D/g,"");
-    return /^[6-9]\d{9}$/.test(num);
-  }
-
-  function validEmail(e){
-    const em = String(e||"").trim();
-    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em);
-  }
-
-  function getProfile(){
-    try{
-      const raw = localStorage.getItem(PROFILE_KEY);
-      if(!raw) return null;
-      return JSON.parse(raw);
-    }catch(e){
-      return null;
+  // ✅ Simple device id (NO PHOTO, NO LOGIN)
+  function getDeviceId(){
+    let id = localStorage.getItem("mockrise_device_id");
+    if(!id){
+      id = "dev_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
+      localStorage.setItem("mockrise_device_id", id);
     }
+    return id;
   }
 
-  function setProfile(data){
-    localStorage.setItem(PROFILE_KEY, JSON.stringify(data));
+  const DEVICE_ID = getDeviceId();
+  $("deviceIdTxt").textContent = DEVICE_ID;
+
+  // ✅ Load saved user fields
+  function loadUserLocal(){
+    const name = localStorage.getItem("mr_name") || "";
+    const mobile = localStorage.getItem("mr_mobile") || "";
+    const email = localStorage.getItem("mr_email") || "";
+    $("uName").value = name;
+    $("uMobile").value = mobile;
+    $("uEmail").value = email;
   }
 
-  function profileIsValid(p){
-    if(!p) return false;
-    return validName(p.name) && validMobile(p.mobile) && validEmail(p.email);
+  function setUserSaveStatus(txt, color="#111118"){
+    $("userSaveStatus").textContent = txt;
+    $("userSaveStatus").style.color = color;
+    $("userSaveStatus").style.fontWeight = "900";
   }
 
-  function renderProfileUI(){
-    const p = getProfile();
-    if(!p){
-      $("userLine1").textContent = "Name: -";
-      $("userLine2").textContent = "Mobile: -";
-      $("userLine3").textContent = "Email: -";
-      $("userLine4").textContent = "Roll No: -";
-      $("profileBadge").style.display = "none";
-      lockCalculate(true);
-      return;
-    }
-
-    $("userLine1").textContent = `Name: ${p.name || "-"}`;
-    $("userLine2").textContent = `Mobile: ${p.mobile || "-"}`;
-    $("userLine3").textContent = `Email: ${p.email || "-"}`;
-    $("userLine4").textContent = `Roll No: ${p.roll || "-"}`;
-
-    const ok = profileIsValid(p);
-    $("profileBadge").style.display = ok ? "inline-flex" : "none";
-    lockCalculate(!ok);
+  function isValidMobile(m){
+    return /^[6-9]\d{9}$/.test(String(m||"").trim());
   }
 
-  function lockCalculate(locked){
-    $("calcBtn").disabled = locked;
-    $("lockNote").style.display = locked ? "block" : "none";
-  }
-
-  function fillProfileFormFromSaved(){
-    const p = getProfile();
-    $("uName").value = p?.name || "";
-    $("uMobile").value = p?.mobile || "";
-    $("uEmail").value = p?.email || "";
-    $("uRoll").value = p?.roll || "";
-  }
-
-  $("editProfileBtn").addEventListener("click", ()=>{
-    fillProfileFormFromSaved();
-    openProfileModal();
-  });
-
-  $("closeModalBtn").addEventListener("click", ()=>{
-    closeProfileModal();
-  });
-
-  $("profileModal").addEventListener("click", (e)=>{
-    if(e.target.id === "profileModal") closeProfileModal();
-  });
-
-  // ✅ FIRESTORE SAVE FUNCTION
-  async function saveUserToFirestore(userObj){
-    // collection: users, docId: mobile
-    const mobileId = String(userObj.mobile || "").replace(/\D/g,"");
-    const ref = doc(db, "users", mobileId);
-
-    await setDoc(ref, {
-      name: userObj.name || "",
-      mobile: mobileId,
-      email: userObj.email || "",
-      roll: userObj.roll || "",
-      source: "cutoff-page",
-      updatedAt: serverTimestamp(),
-      createdAt: userObj.createdAt ? userObj.createdAt : serverTimestamp()
-    }, { merge: true });
-  }
-
-  $("saveProfileBtn").addEventListener("click", async ()=>{
-    const name = normalizeName($("uName").value);
-    const mobile = String($("uMobile").value||"").replace(/\D/g,"");
+  // ✅ Save User Details to Firestore (NO AUTH REQUIRED)
+  $("saveUserBtn").addEventListener("click", async ()=>{
+    const name = String($("uName").value||"").trim();
+    const mobile = String($("uMobile").value||"").trim();
     const email = String($("uEmail").value||"").trim();
-    const roll = String($("uRoll").value||"").trim();
 
-    if(!validName(name)){
-      $("profileErr").textContent = "नाम सही लिखो (min 3 letters) ❌";
-      $("profileErr").style.display = "block";
+    if(name.length < 2){
+      alert("नाम सही भर ✅");
       return;
     }
-    if(!validMobile(mobile)){
-      $("profileErr").textContent = "10 digit valid mobile डालो ❌";
-      $("profileErr").style.display = "block";
-      return;
-    }
-    if(!validEmail(email)){
-      $("profileErr").textContent = "Valid email डालो ❌";
-      $("profileErr").style.display = "block";
+    if(!isValidMobile(mobile)){
+      alert("Mobile number सही डाल (10 digit) ✅");
       return;
     }
 
     try{
-      $("saveProfileBtn").disabled = true;
-      $("saveProfileBtn").innerHTML = `<span class="material-symbols-outlined">sync</span> Saving...`;
+      setUserSaveStatus("Saving...", "#f59e0b");
 
-      const existing = getProfile();
-      const payload = {
+      // local save
+      localStorage.setItem("mr_name", name);
+      localStorage.setItem("mr_mobile", mobile);
+      localStorage.setItem("mr_email", email);
+
+      // Firestore save (collection: users_public)
+      // ✅ No photo fields added at all
+      const ref = doc(db, "users_public", DEVICE_ID);
+
+      await setDoc(ref, {
         name,
         mobile,
         email,
-        roll,
-        updatedAt: Date.now(),
-        createdAt: existing?.createdAt || Date.now()
-      };
+        deviceId: DEVICE_ID,
+        updatedAt: Date.now()
+      }, { merge: true });
 
-      // ✅ Local Save
-      setProfile(payload);
-
-      // ✅ Firestore Save
-      await saveUserToFirestore(payload);
-
-      $("profileErr").style.display = "none";
-      closeProfileModal();
-      renderProfileUI();
-      setLastUpdated();
-
-      $("saveProfileBtn").disabled = false;
-      $("saveProfileBtn").innerHTML = `<span class="material-symbols-outlined">save</span> Save Details`;
-
-    }catch(err){
-      console.log(err);
-      $("profileErr").textContent = "Firebase save failed ❌ (rules check करो)";
-      $("profileErr").style.display = "block";
-      $("saveProfileBtn").disabled = false;
-      $("saveProfileBtn").innerHTML = `<span class="material-symbols-outlined">save</span> Save Details`;
+      setUserSaveStatus("Saved ✅", "#16a34a");
+    }catch(e){
+      console.log(e);
+      setUserSaveStatus("Failed ❌", "#dc2626");
+      alert("Firestore save error ❌ (rules check कर)");
     }
+  });
+
+  $("clearUserBtn").addEventListener("click", ()=>{
+    $("uName").value = "";
+    $("uMobile").value = "";
+    $("uEmail").value = "";
+    localStorage.removeItem("mr_name");
+    localStorage.removeItem("mr_mobile");
+    localStorage.removeItem("mr_email");
+    setUserSaveStatus("Cleared", "#111118");
   });
 
   async function loadExams(){
@@ -643,13 +481,6 @@
   }
 
   $("calcBtn").addEventListener("click", async ()=>{
-    const p = getProfile();
-    if(!profileIsValid(p)){
-      alert("पहले सही Name + 10 digit Mobile + Email save करो ✅");
-      openProfileModal();
-      return;
-    }
-
     if(!examConfig){ alert("पहले exam select कर ✅"); return; }
 
     try{
@@ -682,6 +513,7 @@
 
       setLastUpdated();
       setStatus("Updated ✅", "green");
+
     }catch(e){
       console.log(e);
       setStatus("Failed", "red");
@@ -689,17 +521,10 @@
     }
   });
 
-  // ✅ Init
+  // Init
+  loadUserLocal();
   loadExams();
   setLastUpdated();
-
-  renderProfileUI();
-
-  const p0 = getProfile();
-  if(!profileIsValid(p0)){
-    fillProfileFormFromSaved();
-    openProfileModal();
-  }
 </script>
 </body>
-</html></html>
+</html>
