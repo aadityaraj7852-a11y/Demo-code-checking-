@@ -16,6 +16,9 @@
   <!-- PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
+  <!-- ✅ force upgrade http->https (ssl warning reduce) -->
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+
   <style>
     body{font-family:"Lexend",sans-serif;background:#f5f5f8;min-height:100dvh;}
     .shadow-card{box-shadow:0 14px 40px rgba(0,0,0,.08);}
@@ -122,7 +125,7 @@
   <span class="material-symbols-outlined" style="font-size:28px;">support_agent</span>
 </div>
 
-<!-- ✅ Roll Already Checked Popup -->
+<!-- ✅ Popup -->
 <div class="popupWrap" id="rollPopup">
   <div class="popupBox">
     <div class="flex items-start gap-3">
@@ -131,7 +134,7 @@
       </div>
       <div class="flex-1">
         <div class="font-black text-lg text-[#111118]">Already Submitted</div>
-        <div class="text-sm text-gray-600 mt-1" id="rollPopupMsg">This mobile already used.</div>
+        <div class="text-sm text-gray-600 mt-1" id="rollPopupMsg">This roll already checked.</div>
       </div>
     </div>
 
@@ -161,7 +164,7 @@
     <div class="size-10"></div>
   </div>
 
-  <!-- ✅ Screen Search -->
+  <!-- Screen Search -->
   <section id="screenSearch" class="flex-1">
     <div class="px-6 pt-8 pb-4">
       <h3 class="text-[#111118] text-2xl font-black text-center">Check Your OMR Result</h3>
@@ -170,7 +173,6 @@
 
     <div class="px-6 pb-10 space-y-6">
 
-      <!-- ✅ Exam Setup -->
       <div class="rounded-2xl border border-[#dbdbe6] bg-white p-4 shadow-card">
         <div class="text-[#0a0ac2] text-xs font-black uppercase tracking-widest mb-3">Exam Setup</div>
 
@@ -206,18 +208,16 @@
         </div>
       </div>
 
-      <!-- ✅ Candidate -->
       <div class="rounded-2xl border border-[#dbdbe6] bg-white p-4 shadow-card">
         <div class="text-[#0a0ac2] text-xs font-black uppercase tracking-widest mb-3">Candidate</div>
 
-        <!-- ✅ अब editable (Login नहीं है) -->
         <div class="grid md:grid-cols-3 gap-3">
           <input id="name" class="field" placeholder="Full Name"/>
           <input id="mobile" class="field" placeholder="Mobile (10 digits)"/>
           <input id="email" class="field" placeholder="Email"/>
         </div>
 
-        <!-- ✅ CATEGORY -->
+        <!-- CATEGORY -->
         <div class="mt-4">
           <label class="text-[#0a0ac2] text-xs font-black uppercase tracking-widest">Category</label>
           <select id="category" class="field mt-2">
@@ -245,7 +245,7 @@
     </div>
   </section>
 
-  <!-- ✅ Screen Fill -->
+  <!-- Screen Fill -->
   <section id="screenFill" class="hidden flex-1">
     <div class="px-6 pt-8 pb-4">
       <h3 class="text-[#111118] text-2xl font-black text-center">Fill Answers</h3>
@@ -272,7 +272,7 @@
     </div>
   </section>
 
-  <!-- ✅ Screen Result -->
+  <!-- Screen Result -->
   <section id="screenResult" class="hidden flex-1">
     <div class="px-6 pt-8 pb-4">
       <h3 class="text-[#111118] text-2xl font-black text-center">Result Card</h3>
@@ -394,22 +394,33 @@
 </div>
 
 <script>
-  // ✅ Worker API
+  // ✅ Cloudflare Worker API
   const WORKER_API = "https://spring-cloud-aa4f.aadityaraj7852.workers.dev";
 
   const WA_NUMBER = "917852097223";
   const WA_MSG_HELP = "Sir, I am facing issues in checking omr.";
-  const WA_MSG_ADMIN = "Sir, someone used my details and I can't check now.";
+  const WA_MSG_ADMIN = "Sir, someone used my roll no and check my omr so I can't check now.";
 
   // ✅ PDF Branding
   const PDF_BRAND_NAME = "Mockrise";
   const PDF_BRAND_EMAIL = "Email-aadityaraj7852@gmail.com";
   const PDF_BRAND_MOBILE = "Mobile-7852097223";
-
-  // ✅ Logo direct
   const BRAND_LOGO_URL = "./logo.png";
 
   const $ = (id)=>document.getElementById(id);
+
+  async function apiGET(path){
+    const res = await fetch(WORKER_API + path);
+    return await res.json();
+  }
+  async function apiPOST(path, payload){
+    const res = await fetch(WORKER_API + path, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(payload)
+    });
+    return await res.json();
+  }
 
   let examPosts = [];
   let examConfig = null;
@@ -454,7 +465,6 @@
     $(screen).classList.remove("hidden");
   }
 
-  // ✅ back icon go:back
   $("backBtn").addEventListener("click", ()=>{
     try{ window.location.href="go:back"; }
     catch(e){ history.back(); }
@@ -463,19 +473,6 @@
   $("helpBtn").onclick = ()=> window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(WA_MSG_HELP)}`,"_blank");
   $("contactAdmin").onclick = ()=> window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(WA_MSG_ADMIN)}`,"_blank");
   $("popupOk").onclick = ()=> $("rollPopup").classList.remove("show");
-
-  async function apiGET(path){
-    const res = await fetch(WORKER_API + path);
-    return await res.json();
-  }
-  async function apiPOST(path, payload){
-    const res = await fetch(WORKER_API + path, {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify(payload)
-    });
-    return await res.json();
-  }
 
   function parseExamJSON(html){
     const match = (html||"").match(/\{[\s\S]*\}/);
@@ -488,8 +485,8 @@
     const data = await apiGET("/exams");
 
     if(!data.ok){
-      alert("Exams load failed ❌");
       $("examSelect").innerHTML = `<option value="">Failed</option>`;
+      alert("Exams load failed ❌");
       return;
     }
 
@@ -550,7 +547,6 @@
       $("paperSelect").appendChild(opt);
     });
 
-    // ✅ add Don't know option
     const dk=document.createElement("option");
     dk.value="__DONT_KNOW__";
     dk.textContent="Don't know (Auto Detect)";
@@ -578,7 +574,6 @@
     const full=examConfig.answerKey||{};
     return (full[shiftName]||{})[paperCode]||{};
   }
-
   function getAnswerKey(){
     return getAnswerKeyForPaper(state.shift, state.paperCode);
   }
@@ -676,11 +671,22 @@
     state.marks=Math.max(0, Number((state.posMarks-state.negMarks).toFixed(2)));
   }
 
+  // ✅ Rank fetch (Worker)
   async function fetchAttemptsByPaper(){
-    // ⚠️ Ranks अभी भी frontend के पुराने logic पर थे (Firestore से)
-    // अब data Worker में जा रहा है, इसलिए rank compute public करना है तो अलग API बनानी पड़ेगी
-    // अभी के लिए simple mode: rank = "-"
-    return [];
+    const data = await apiGET(`/attempts?examName=${encodeURIComponent(examConfig.examName)}&shift=${encodeURIComponent(state.shift)}&paperCode=${encodeURIComponent(state.paperCode)}`);
+    return data.ok ? (data.attempts||[]) : [];
+  }
+  async function fetchAttemptsByShift(){
+    const data = await apiGET(`/attempts?examName=${encodeURIComponent(examConfig.examName)}&shift=${encodeURIComponent(state.shift)}`);
+    return data.ok ? (data.attempts||[]) : [];
+  }
+  async function fetchAttemptsOverall(){
+    const data = await apiGET(`/attempts?examName=${encodeURIComponent(examConfig.examName)}`);
+    return data.ok ? (data.attempts||[]) : [];
+  }
+  async function fetchAttemptsByCategory(){
+    const data = await apiGET(`/attempts?examName=${encodeURIComponent(examConfig.examName)}&shift=${encodeURIComponent(state.shift)}&paperCode=${encodeURIComponent(state.paperCode)}&category=${encodeURIComponent(String(state.category||"OTHER"))}`);
+    return data.ok ? (data.attempts||[]) : [];
   }
 
   function formatRank(rank,total){
@@ -689,39 +695,79 @@
   }
 
   async function computeRanksAndStats(){
-    // ✅ Simple placeholder (ranks off)
-    state.overallRank="-";
-    state.shiftRank="-";
-    state.catRank="-";
-    state.overallTotal=0;
-    state.shiftTotal=0;
-    state.catTotal=0;
+    const paperArr=await fetchAttemptsByPaper();
+    const shiftArr=await fetchAttemptsByShift();
+    const overallArr=await fetchAttemptsOverall();
+    const catArr = await fetchAttemptsByCategory();
+    const totalMarks=Number(examConfig.totalMarks||0);
 
-    state.avgMarks = state.marks;
-    state.above80 = 0;
+    const shiftSorted=[...shiftArr].sort((a,b)=>Number(b.marks||0)-Number(a.marks||0));
+    const overallSorted=[...overallArr].sort((a,b)=>Number(b.marks||0)-Number(a.marks||0));
+    const catSorted=[...catArr].sort((a,b)=>Number(b.marks||0)-Number(a.marks||0));
 
-    // difficulty default based on question count
+    const rankOverall = overallSorted.findIndex(x=>String(x.roll)===String(state.roll)) + 1;
+    const rankShift = shiftSorted.findIndex(x=>String(x.roll)===String(state.roll)) + 1;
+    const rankCat = catSorted.findIndex(x=>String(x.roll)===String(state.roll)) + 1;
+
+    state.overallTotal = overallSorted.length || 1;
+    state.shiftTotal = shiftSorted.length || 1;
+    state.catTotal = catSorted.length || 1;
+
+    state.overallRank = rankOverall > 0 ? rankOverall : "-";
+    state.shiftRank = rankShift > 0 ? rankShift : "-";
+    state.catRank = rankCat > 0 ? rankCat : "-";
+
+    let sum=0;
+    paperArr.forEach(x=>sum += Number(x.marks||0));
+    state.avgMarks = paperArr.length ? Number((sum/paperArr.length).toFixed(2)) : state.marks;
+
+    let above80=0;
+    paperArr.forEach(x=>{
+      const m=Number(x.marks||0);
+      const pct= totalMarks ? (m/totalMarks)*100 : 0;
+      if(pct >= 80) above80++;
+    });
+    state.above80 = above80;
+
+    // Difficulty map from paper correctness ratio
     const key=getAnswerKey();
     const nums=Object.keys(key).map(x=>Number(x)).filter(n=>!isNaN(n));
     const maxQ=nums.length? Math.max(...nums) : getTotalQFromAnswerKey(examConfig);
 
+    const correctCount={}, attemptCount={};
+    for(let q=1;q<=maxQ;q++){ correctCount[q]=0; attemptCount[q]=0; }
+
+    paperArr.forEach(at=>{
+      const ansObj=at.answers||{};
+      for(let q=1;q<=maxQ;q++){
+        const a=ansObj[q]||ansObj[String(q)]||"";
+        if(a){
+          attemptCount[q]++;
+          if(String(a).toUpperCase()===String(key[q]||"").toUpperCase()) correctCount[q]++;
+        }
+      }
+    });
+
+    const ratios=[];
+    for(let q=1;q<=maxQ;q++){
+      const r=attemptCount[q]? (correctCount[q]/attemptCount[q]) : 0;
+      ratios.push({q,r});
+    }
+    ratios.sort((a,b)=>b.r-a.r);
+
     const easyCount=Math.max(1,Math.floor(maxQ*0.33));
     const hardCount=Math.max(1,Math.floor(maxQ*0.33));
-    const diffMap={};
-
-    for(let q=1;q<=maxQ;q++){
-      if(q<=easyCount) diffMap[q]="Easy";
-      else if(q>maxQ-hardCount) diffMap[q]="Hard";
-      else diffMap[q]="Moderate";
-    }
-    state.difficultyMap=diffMap;
+    const easySet=new Set(ratios.slice(0,easyCount).map(x=>x.q));
+    const hardSet=new Set(ratios.slice(ratios.length-hardCount).map(x=>x.q));
 
     let easy=0,moderate=0,hard=0;
-    Object.values(diffMap).forEach(x=>{
-      if(x==="Easy") easy++;
-      else if(x==="Hard") hard++;
-      else moderate++;
-    });
+    const diffMap={};
+    for(let q=1;q<=maxQ;q++){
+      if(easySet.has(q)){ diffMap[q]="Easy"; easy++; }
+      else if(hardSet.has(q)){ diffMap[q]="Hard"; hard++; }
+      else { diffMap[q]="Moderate"; moderate++; }
+    }
+    state.difficultyMap=diffMap;
     state.diffCount={easy,moderate,hard};
   }
 
@@ -787,9 +833,9 @@
     $("rCat").textContent=state.category||"-";
 
     $("rMarks").textContent=`${state.marks} / ${examConfig.totalMarks}`;
-    $("rRankOverall").textContent = "-";
-    $("rRankShift").textContent = "-";
-    $("rRankCat").textContent = "-";
+    $("rRankOverall").textContent = formatRank(state.overallRank, state.overallTotal);
+    $("rRankShift").textContent = formatRank(state.shiftRank, state.shiftTotal);
+    $("rRankCat").textContent = formatRank(state.catRank, state.catTotal);
 
     $("rAbove80").textContent = state.above80;
 
@@ -871,6 +917,8 @@
     pdf.text(`Paper: ${state.paperCode}`, rightX, y+28);
     pdf.text(`Date: ${new Date().toLocaleDateString("en-GB")}`, rightX, y+34);
 
+    pdf.text(`Category Rank: ${formatRank(state.catRank, state.catTotal)}`, rightX, y+40);
+
     y += 52;
     pdf.setDrawColor(130);
     pdf.rect(margin, y, PAGE_W - margin*2, 42);
@@ -886,6 +934,7 @@
 
     pdf.text(`Skipped: ${state.notAttempted}`, rightX, y+18);
     pdf.text(`Marks: ${state.marks}/${examConfig.totalMarks}`, rightX, y+26);
+    pdf.text(`Overall Rank: ${formatRank(state.overallRank, state.overallTotal)}`, rightX, y+34);
 
     y += 52;
     pdf.setFont(undefined,"bold");
@@ -974,28 +1023,24 @@
     return new RegExp(`^\\d{${digits}}$`).test(String(roll));
   }
 
-  function isValidMobile(m){
-    return /^\d{10}$/.test(String(m||"").trim());
-  }
-  function isValidEmail(e){
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e||"").trim());
-  }
+  function isValidMobile(m){ return /^\d{10}$/.test(String(m||"").trim()); }
+  function isValidEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e||"").trim()); }
 
   $("continueBtn").addEventListener("click", async ()=>{
     if(!examConfig){ alert("Exam select करो"); return; }
 
-    // ✅ candidate details first
-    const name = $("name").value.trim();
-    const mobile = $("mobile").value.trim();
-    const email = $("email").value.trim();
+    // ✅ Candidate details
+    const nm = $("name").value.trim();
+    const mb = $("mobile").value.trim();
+    const em = $("email").value.trim();
 
-    if(!name){ alert("Name जरूरी है"); return; }
-    if(!isValidMobile(mobile)){ alert("Mobile 10 digit होना चाहिए"); return; }
-    if(!isValidEmail(email)){ alert("Email सही डालो"); return; }
+    if(!nm){ alert("Name जरूरी है"); return; }
+    if(!isValidMobile(mb)){ alert("Mobile 10 digit होना चाहिए"); return; }
+    if(!isValidEmail(em)){ alert("Valid Email डालो"); return; }
 
-    userState.name = name;
-    userState.mobile = mobile;
-    userState.email = email;
+    userState.name=nm;
+    userState.mobile=mb;
+    userState.email=em;
 
     const shift=$("shiftSelect").value;
     let paper=$("paperSelect").value;
@@ -1024,7 +1069,7 @@
 
     state.answers={};
 
-    // temp key for UI if don't know
+    // temporary key for UI if don't know
     if(paper==="__DONT_KNOW__"){
       const found=(examConfig.shifts||[]).find(s=>s.name===shift);
       const firstPaper=found?.paperCodes?.[0];
@@ -1045,7 +1090,7 @@
       return;
     }
 
-    // ✅ Auto detect paper if needed
+    // ✅ auto detect paper
     if(state.paperCode==="__DONT_KNOW__"){
       const detected = autoDetectPaperCode(state.answers);
       if(!detected){
@@ -1065,8 +1110,8 @@
 
     calcMarks();
 
-    // ✅ Save via Worker
-    const out = await apiPOST("/submit", {
+    // ✅ Save via Worker (ROLL LOCK ONLY)
+    const out = await apiPOST("/submit",{
       name: userState.name,
       mobile: userState.mobile,
       email: userState.email,
@@ -1077,17 +1122,17 @@
       roll: state.roll,
       category: state.category,
 
-      answers: state.answers,
-
-      marks: state.marks,
       correct: state.correct,
       wrong: state.wrong,
       attempted: state.attempted,
-      notAttempted: state.notAttempted
+      notAttempted: state.notAttempted,
+      marks: state.marks,
+
+      answers: state.answers
     });
 
     if(!out.ok){
-      $("rollPopupMsg").innerHTML = out.msg || "Already submitted / Error ❌";
+      $("rollPopupMsg").innerHTML = out.msg || "Already submitted ❌";
       $("rollPopup").classList.add("show");
       return;
     }
@@ -1102,7 +1147,7 @@
   $("pdfBtn").addEventListener("click", downloadInvoicePDF);
   $("newBtn").addEventListener("click", ()=>location.reload());
 
-  // ✅ Init
+  // ✅ Init load
   (async ()=>{
     await fetchExams();
     showScreen("screenSearch");
